@@ -1,0 +1,32 @@
+# Token Auth Mod 服务器配置文件
+# 请根据需要修改以下配置项
+
+[authentication]
+# 是否启用令牌认证系统
+enabled = true
+# 共享密钥 (Base64编码)，请使用 /token generate-key 命令生成
+sharedSecret = ""
+# 时间窗口（毫秒），用于令牌验证的时间容差
+timeWindow = 30000
+# 挑战数据的字节数
+challengeSize = 16
+# 响应超时时间（毫秒）
+responseTimeout = 5000
+
+[security]
+# 每个IP地址的最大尝试次数
+maxAttemptsPerIP = 5
+# IP地址被阻止的持续时间（分钟）
+blockDurationMinutes = 30
+# 是否启用IP白名单
+enableIPWhitelist = false
+# IP白名单列表（仅在enableIPWhitelist为true时生效）
+ipWhitelist = ["127.0.0.1", "::1"]
+
+[logging]
+# 是否启用认证日志
+enableAuthLogging = true
+# 是否记录成功的认证
+logSuccessfulAuth = true
+# 是否记录失败的认证尝试
+logFailedAttempts = true

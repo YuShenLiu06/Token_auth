@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "token_auth",
+	"version": "${version}",
+	"name": "Token Auth Mod",
+	"description": "基于HMAC-SHA256的动态令牌认证系统，为Minecraft服务器提供增强的安全保护",
+	"authors": [
+		"nety.ys"
+	],
+	"contact": {
+		"homepage": "https://github.com/nety-ys/token-auth-mod",
+		"sources": "https://github.com/nety-ys/token-auth-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/token_auth/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"nety.ys.TokenAuthMod"
+		],
+		"client": [
+			"nety.ys.client.ClientInitializer"
+		]
+	},
+	"mixins": [
+		"token_auth.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.21",
+		"minecraft": "~1.19.2",
+		"java": ">=17",
+		"fabric-api": ">=0.76.0+1.19.2"
+	}
+}

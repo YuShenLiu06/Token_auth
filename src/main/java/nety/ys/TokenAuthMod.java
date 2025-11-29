@@ -1,0 +1,148 @@
+package nety.ys;
+
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
+import nety.ys.client.ClientInitializer;
+import nety.ys.client.ClientTokenManager;
+import nety.ys.config.ConfigManager;
+import nety.ys.network.PacketRegistry;
+import nety.ys.server.AuthSessionManager;
+import nety.ys.server.commands.TokenCommand;
+import nety.ys.server.events.AuthEventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Token Auth Mod 主入口类
+ * 负责初始化客户端和服务端的认证系统组件
+ * 
+ * @author nety.ys
+ */
+public class TokenAuthMod implements ModInitializer {
+    /**
+     * 模组日志记录器
+     */
+    public static final Logger LOGGER = LoggerFactory.getLogger("token-auth");
+    
+    /**
+     * 模组实例
+     */
+    private static TokenAuthMod INSTANCE;
+    
+    /**
+     * 配置管理器
+     */
+    private ConfigManager configManager;
+    
+    /**
+     * 获取模组实例
+     * 
+     * @return 模组实例
+     */
+    public static TokenAuthMod getInstance() {
+        return INSTANCE;
+    }
+    
+    /**
+     * 获取配置管理器
+     * 
+     * @return 配置管理器实例
+     */
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+    
+    /**
+     * 模组初始化方法
+     * 根据环境类型初始化相应的组件
+     */
+    @Override
+    public void onInitialize() {
+        INSTANCE = this;
+        LOGGER.info("Token Auth Mod 正在初始化...");
+        
+        // 初始化配置管理器
+        configManager = new ConfigManager();
+        
+        // 根据环境初始化
+        if (FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.SERVER) {
+            initializeServer();
+        } else {
+            initializeClient();
+        }
+        
+        LOGGER.info("Token Auth Mod 初始化完成！");
+    }
+    
+    /**
+     * 初始化服务端组件
+     */
+    private void initializeServer() {
+        LOGGER.info("正在初始化服务端认证系统...");
+        
+        // 加载服务器配置
+        configManager.loadServerConfig();
+        
+        // 初始化认证会话管理器
+        AuthSessionManager.initialize();
+        
+        // 注册服务端数据包
+        PacketRegistry.registerServerPackets();
+        
+        // 注册事件处理器
+        registerServerEvents();
+        
+        // 注册管理命令
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            TokenCommand.register(dispatcher);
+        });
+        
+        LOGGER.info("服务端认证系统初始化完成");
+    }
+    
+    /**
+     * 初始化客户端组件
+     */
+    private void initializeClient() {
+        LOGGER.info("正在初始化客户端认证系统...");
+        
+        // 加载客户端配置
+        configManager.loadClientConfig();
+        
+        // 初始化客户端令牌管理器
+        ClientTokenManager.initialize();
+        
+        // 注册客户端数据包
+        PacketRegistry.registerClientPackets();
+        
+        LOGGER.info("客户端认证系统初始化完成");
+    }
+    
+    /**
+     * 注册服务端事件处理器
+     */
+    private void registerServerEvents() {
+        // 服务器生命周期事件
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            LOGGER.info("服务器启动中，认证系统准备就绪");
+            AuthSessionManager.onServerStarting(server);
+        });
+        
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            LOGGER.info("服务器已停止，清理认证会话");
+            AuthSessionManager.onServerStopped();
+        });
+        
+        // 玩家连接事件
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            AuthEventHandler.onPlayerJoin(handler, sender, server);
+        });
+        
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            AuthEventHandler.onPlayerDisconnect(handler, server);
+        });
+    }
+}

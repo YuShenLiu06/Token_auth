@@ -1,0 +1,151 @@
+package nety.ys.server;
+
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.minecraft.server.network.ServerPlayerEntity;
+import nety.ys.TokenAuthMod;
+import nety.ys.config.ModConfig;
+import nety.ys.network.packets.ChallengePacket;
+import nety.ys.network.packets.TokenResponsePacket;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
+/**
+ * 服务端认证数据包处理器
+ * 负责处理客户端发送的令牌响应
+ * 
+ * @author nety.ys
+ */
+public class AuthPacketHandler {
+    
+    /**
+     * 处理客户端令牌响应
+     * 
+     * @param packet 令牌响应数据包
+     * @param player 玩家实体
+     * @param responseSender 响应发送器
+     */
+    public static void handleTokenResponse(TokenResponsePacket packet, ServerPlayerEntity player, PacketSender responseSender) {
+        try {
+            // 获取玩家IP地址
+            InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
+            
+            // 获取服务器配置
+            ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+            
+            // 检查认证是否启用
+            if (!config.enabled) {
+                TokenAuthMod.LOGGER.warn("收到令牌响应，但认证系统已禁用");
+                return;
+            }
+            
+            // 验证令牌响应
+            boolean isValid = AuthSessionManager.verifyTokenResponse(
+                player.getUuid().toString(),
+                packet.getTokenResponse(),
+                packet.getChallengeTimestamp(),
+                playerAddress
+            );
+            
+            if (isValid) {
+                // 认证成功
+                onAuthenticationSuccess(player);
+            } else {
+                // 认证失败
+                onAuthenticationFailure(player, "令牌验证失败");
+            }
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("处理令牌响应时出错", e);
+            onAuthenticationFailure(player, "处理令牌响应时出错: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 发送挑战给客户端
+     * 
+     * @param player 目标玩家
+     * @return 如果成功发送挑战则返回true
+     */
+    public static boolean sendChallengeToClient(ServerPlayerEntity player) {
+        try {
+            // 获取玩家IP地址
+            InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
+            
+            // 创建认证会话
+            AuthSessionManager.AuthSession session = AuthSessionManager.createSession(
+                player.getUuid().toString(),
+                playerAddress
+            );
+            
+            if (session == null) {
+                TokenAuthMod.LOGGER.error("无法为玩家 {} 创建认证会话", player.getName().getString());
+                return false;
+            }
+            
+            // 创建挑战数据包
+            ChallengePacket challengePacket = new ChallengePacket(
+                session.getChallenge(),
+                session.getTimestamp()
+            );
+            
+            // 发送挑战给客户端
+            challengePacket.send(player);
+            
+            TokenAuthMod.LOGGER.debug("已向玩家 {} 发送认证挑战", player.getName().getString());
+            return true;
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("发送挑战给客户端时出错", e);
+            return false;
+        }
+    }
+    
+    /**
+     * 认证成功处理
+     * 
+     * @param player 玩家实体
+     */
+    private static void onAuthenticationSuccess(ServerPlayerEntity player) {
+        ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+        
+        // 记录成功日志
+        if (config.enableAuthLogging && config.logSuccessfulAuth) {
+            TokenAuthMod.LOGGER.info("玩家 {} 认证成功", player.getName().getString());
+        }
+        
+        // 标记玩家为已认证
+        AuthSessionManager.markPlayerAsAuthenticated(player.getUuid().toString());
+        
+        // 继续正常的游戏流程
+        // 这里可能需要通知服务器继续处理玩家的登录
+    }
+    
+    /**
+     * 认证失败处理
+     * 
+     * @param player 玩家实体
+     * @param reason 失败原因
+     */
+    private static void onAuthenticationFailure(ServerPlayerEntity player, String reason) {
+        ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+        
+        // 记录失败日志
+        if (config.enableAuthLogging && config.logFailedAttempts) {
+            TokenAuthMod.LOGGER.warn("玩家 {} 认证失败: {}", player.getName().getString(), reason);
+        }
+        
+        // 获取玩家IP地址
+        InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
+        
+        // 增加失败尝试次数
+        int attempts = AuthSessionManager.incrementFailedAttempt(playerAddress.toString());
+        
+        // 检查是否需要阻止IP
+        if (attempts >= config.maxAttemptsPerIP) {
+            AuthSessionManager.blockIPAddress(playerAddress.toString(), config.blockDurationMinutes);
+            TokenAuthMod.LOGGER.warn("IP地址 {} 已被阻止，原因：认证失败次数过多", playerAddress.toString());
+        }
+        
+        // 断开玩家连接
+        player.networkHandler.disconnect(net.minecraft.text.Text.literal("认证失败: " + reason));
+    }
+}

@@ -1,0 +1,14 @@
+# Token Auth Mod 客户端配置文件
+# 请确保sharedSecret与服务器配置中的相同
+
+[authentication]
+# 共享密钥 (Base64编码)，必须与服务器配置中的相同
+sharedSecret = ""
+# 是否自动刷新令牌
+autoRefresh = false
+
+[connection]
+# 连接超时时间（毫秒）
+timeout = 10000
+# 重试次数
+retryAttempts = 3
