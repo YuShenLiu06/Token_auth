@@ -4,6 +4,7 @@
   "package": "nety.ys.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "AuthResultPacketMixin"
   ],
   "client": [
     "ClientLoginNetworkHandlerMixin",

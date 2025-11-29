@@ -67,10 +67,16 @@ public class AuthPacketHandler {
                 // 认证成功
                 TokenAuthMod.LOGGER.info("玩家 {} 认证成功", player.getName().getString());
                 onAuthenticationSuccess(player);
+                
+                // 发送认证成功结果给客户端
+                new nety.ys.network.packets.AuthResultPacket(true, "认证成功，正在进入游戏...").send(player);
             } else {
                 // 认证失败
                 TokenAuthMod.LOGGER.warn("玩家 {} 认证失败：令牌验证失败", player.getName().getString());
                 onAuthenticationFailure(player, "令牌验证失败");
+                
+                // 发送认证失败结果给客户端
+                new nety.ys.network.packets.AuthResultPacket(false, "认证失败，请检查客户端配置").send(player);
             }
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("处理令牌响应时出错", e);
