@@ -27,8 +27,9 @@ public class ServerPlayerEntityMixin {
         ServerPlayerEntity player = (ServerPlayerEntity)(Object)this;
         
         // 移除玩家认证状态
-        AuthSessionManager.removePlayerAuthentication(player.getUuid().toString());
-        
-        TokenAuthMod.LOGGER.debug("玩家 {} 已断开连接，清理认证状态", player.getName().getString());
+        if (player != null && player.getUuid() != null) {
+            AuthSessionManager.removePlayerAuthentication(player.getUuid().toString());
+            TokenAuthMod.LOGGER.debug("玩家 {} 已断开连接，清理认证状态", player.getName().getString());
+        }
     }
 }

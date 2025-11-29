@@ -37,7 +37,7 @@ public class TokenCommand {
      */
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         // 主命令：/token
-        dispatcher.register(CommandManager.literal("token"))
+        dispatcher.register(CommandManager.literal("token")
             .requires(source -> source.hasPermissionLevel(3)) // 需要OP 3级权限
             .then(CommandManager.literal("reload")
                 .executes(TokenCommand::reloadConfig))
@@ -45,25 +45,24 @@ public class TokenCommand {
                 .executes(TokenCommand::generateNewKey))
             .then(CommandManager.literal("status")
                 .executes(TokenCommand::showStatus))
-            .then(CommandManager.literal("block-ip"))
+            .then(CommandManager.literal("block-ip")
                 .then(CommandManager.argument("ip", com.mojang.brigadier.arguments.StringArgumentType.string())
-                    .executes(context -> blockIP(context, com.mojang.brigadier.arguments.StringArgumentType.getString(context, "ip"), 30)))
-                .then(CommandManager.argument("ip", com.mojang.brigadier.arguments.StringArgumentType.string())
+                    .executes(context -> blockIP(context, com.mojang.brigadier.arguments.StringArgumentType.getString(context, "ip"), 30))
                     .then(CommandManager.argument("minutes", IntegerArgumentType.integer(1, 1440))
                         .executes(context -> blockIP(context, 
                             com.mojang.brigadier.arguments.StringArgumentType.getString(context, "ip"),
-                            IntegerArgumentType.getInteger(context, "minutes")))))
+                            IntegerArgumentType.getInteger(context, "minutes"))))))
             .then(CommandManager.literal("unblock-ip")
                 .then(CommandManager.argument("ip", com.mojang.brigadier.arguments.StringArgumentType.string())
-                    .executes(context -> unblockIP(context, 
-                        com.mojang.brigadier.arguments.StringArgumentType.getString(context, "ip"))))
+                    .executes(context -> unblockIP(context,
+                        com.mojang.brigadier.arguments.StringArgumentType.getString(context, "ip")))))
             .then(CommandManager.literal("list-blocked-ips")
                 .executes(TokenCommand::listBlockedIPs))
             .then(CommandManager.literal("list-authenticated")
                 .executes(TokenCommand::listAuthenticatedPlayers))
             .then(CommandManager.literal("remove-auth")
                 .then(CommandManager.argument("player", com.mojang.brigadier.arguments.StringArgumentType.string())
-                    .executes(context -> removeAuthentication(context, 
+                    .executes(context -> removeAuthentication(context,
                         com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
         );
     }
@@ -185,8 +184,7 @@ public class TokenCommand {
      */
     private static int unblockIP(CommandContext<ServerCommandSource> context, String ipAddress) {
         try {
-            // 这里需要在AuthSessionManager中添加unblockIPAddress方法
-            // 暂时使用一个占位符实现
+            AuthSessionManager.unblockIPAddress(ipAddress);
             context.getSource().sendFeedback(
                 Text.literal("§aIP地址 §e" + ipAddress + " §a的阻止已解除"), true);
             return 1;
@@ -205,10 +203,19 @@ public class TokenCommand {
      */
     private static int listBlockedIPs(CommandContext<ServerCommandSource> context) {
         try {
-            // 这里需要在AuthSessionManager中添加getBlockedIPs方法
-            // 暂时使用一个占位符实现
-            context.getSource().sendFeedback(
-                Text.literal("§6被阻止的IP地址列表功能待实现"), false);
+            java.util.Set<String> blockedIPs = AuthSessionManager.getBlockedIPs();
+            
+            if (blockedIPs.isEmpty()) {
+                context.getSource().sendFeedback(
+                    Text.literal("§6当前没有被阻止的IP地址"), false);
+            } else {
+                MutableText message = Text.literal("§6被阻止的IP地址:\n");
+                for (String ipAddress : blockedIPs) {
+                    message.append(Text.literal("§c- §e" + ipAddress + "\n"));
+                }
+                context.getSource().sendFeedback(message, false);
+            }
+            
             return 1;
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("列出被阻止的IP时出错", e);

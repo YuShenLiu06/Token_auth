@@ -1,8 +1,6 @@
 package nety.ys.config;
 
 import nety.ys.TokenAuthMod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -10,17 +8,12 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 /**
- * 配置管理器类
- * 负责加载、保存和管理服务器和客户端的配置文件
+ * 简单配置管理器
+ * 不依赖外部库，使用Java标准库
  * 
  * @author nety.ys
  */
-public class ConfigManager {
-    
-    /**
-     * 日志记录器
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger("token-auth-config");
+public class SimpleConfigManager {
     
     /**
      * 服务器配置实例
@@ -69,9 +62,9 @@ public class ConfigManager {
                 try (InputStream input = Files.newInputStream(configPath)) {
                     props.load(input);
                 }
-                LOGGER.info("服务器配置加载成功: {}", configPath);
+                TokenAuthMod.LOGGER.info("服务器配置加载成功: {}", configPath);
             } else {
-                LOGGER.info("服务器配置文件不存在，创建默认配置");
+                TokenAuthMod.LOGGER.info("服务器配置文件不存在，创建默认配置");
             }
             
             // 从属性文件读取服务器配置
@@ -79,12 +72,12 @@ public class ConfigManager {
             
             // 如果配置文件不存在或为空，创建默认配置并保存
             if (!configPath.toFile().exists() || props.isEmpty()) {
-                LOGGER.info("服务器配置文件不存在或为空，创建默认配置");
+                TokenAuthMod.LOGGER.info("服务器配置文件不存在或为空，创建默认配置");
                 serverConfig = new ModConfig.ServerConfig();
                 saveServerConfig();
             }
         } catch (Exception e) {
-            LOGGER.error("加载服务器配置失败，使用默认配置", e);
+            TokenAuthMod.LOGGER.error("加载服务器配置失败，使用默认配置", e);
             serverConfig = new ModConfig.ServerConfig();
         }
     }
@@ -108,9 +101,9 @@ public class ConfigManager {
                 try (InputStream input = Files.newInputStream(configPath)) {
                     props.load(input);
                 }
-                LOGGER.info("客户端配置加载成功: {}", configPath);
+                TokenAuthMod.LOGGER.info("客户端配置加载成功: {}", configPath);
             } else {
-                LOGGER.info("客户端配置文件不存在，创建默认配置");
+                TokenAuthMod.LOGGER.info("客户端配置文件不存在，创建默认配置");
             }
             
             // 从属性文件读取客户端配置
@@ -118,12 +111,12 @@ public class ConfigManager {
             
             // 如果配置文件不存在或为空，创建默认配置并保存
             if (!configPath.toFile().exists() || props.isEmpty()) {
-                LOGGER.info("客户端配置文件不存在或为空，创建默认配置");
+                TokenAuthMod.LOGGER.info("客户端配置文件不存在或为空，创建默认配置");
                 clientConfig = new ModConfig.ClientConfig();
                 saveClientConfig();
             }
         } catch (Exception e) {
-            LOGGER.error("加载客户端配置失败，使用默认配置", e);
+            TokenAuthMod.LOGGER.error("加载客户端配置失败，使用默认配置", e);
             clientConfig = new ModConfig.ClientConfig();
         }
     }
@@ -147,9 +140,9 @@ public class ConfigManager {
                 props.store(output, "Token Auth Mod Server Configuration");
             }
             
-            LOGGER.info("服务器配置已保存");
+            TokenAuthMod.LOGGER.info("服务器配置已保存");
         } catch (Exception e) {
-            LOGGER.error("保存服务器配置失败", e);
+            TokenAuthMod.LOGGER.error("保存服务器配置失败", e);
         }
     }
     
@@ -172,9 +165,9 @@ public class ConfigManager {
                 props.store(output, "Token Auth Mod Client Configuration");
             }
             
-            LOGGER.info("客户端配置已保存");
+            TokenAuthMod.LOGGER.info("客户端配置已保存");
         } catch (Exception e) {
-            LOGGER.error("保存客户端配置失败", e);
+            TokenAuthMod.LOGGER.error("保存客户端配置失败", e);
         }
     }
     
@@ -183,7 +176,7 @@ public class ConfigManager {
      */
     public void reloadServerConfig() {
         loadServerConfig();
-        LOGGER.info("服务器配置已重新加载");
+        TokenAuthMod.LOGGER.info("服务器配置已重新加载");
     }
     
     /**
@@ -191,7 +184,7 @@ public class ConfigManager {
      */
     public void reloadClientConfig() {
         loadClientConfig();
-        LOGGER.info("客户端配置已重新加载");
+        TokenAuthMod.LOGGER.info("客户端配置已重新加载");
     }
     
     /**

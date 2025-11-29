@@ -62,18 +62,30 @@ public class AuthPacketHandler {
     
     /**
      * 发送挑战给客户端
-     * 
+     *
      * @param player 目标玩家
      * @return 如果成功发送挑战则返回true
      */
     public static boolean sendChallengeToClient(ServerPlayerEntity player) {
+        return sendChallengeToClient(player, null);
+    }
+    
+    /**
+     * 发送挑战给客户端
+     *
+     * @param player 目标玩家
+     * @param connectionId 连接ID（可选）
+     * @return 如果成功发送挑战则返回true
+     */
+    public static boolean sendChallengeToClient(ServerPlayerEntity player, String connectionId) {
         try {
             // 获取玩家IP地址
             InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
             
             // 创建认证会话
+            String sessionId = connectionId != null ? connectionId : player.getUuid().toString();
             AuthSessionManager.AuthSession session = AuthSessionManager.createSession(
-                player.getUuid().toString(),
+                sessionId,
                 playerAddress
             );
             

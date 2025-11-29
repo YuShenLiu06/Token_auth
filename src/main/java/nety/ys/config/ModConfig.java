@@ -1,7 +1,8 @@
 package nety.ys.config;
 
-import com.electronwill.nightconfig.core.Config;
-import com.electronwill.nightconfig.core.file.FileConfig;
+// 暂时移除这些依赖，因为它们无法正确解析
+// import com.electronwill.nightconfig.core.Config;
+// import com.electronwill.nightconfig.core.file.FileConfig;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;

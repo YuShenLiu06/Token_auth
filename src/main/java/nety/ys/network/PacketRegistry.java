@@ -22,7 +22,7 @@ public class PacketRegistry {
         TokenAuthMod.LOGGER.info("注册服务端数据包处理器...");
         
         // 注册客户端令牌响应处理器
-        ServerPlayNetworking.registerGlobalReceiver(TokenResponsePacket.ID, new TokenResponsePacket.ServerHandler());
+        ServerPlayNetworking.registerGlobalReceiver(TokenResponsePacket.ID, new TokenResponsePacket.ServerHandler()::receive);
         
         TokenAuthMod.LOGGER.info("服务端数据包处理器注册完成");
     }
@@ -36,7 +36,14 @@ public class PacketRegistry {
         // 注册服务器挑战处理器
         ClientPlayNetworking.registerGlobalReceiver(ChallengePacket.ID, (client, handler, buf, responseSender) -> {
             ChallengePacket packet = ChallengePacket.fromBytes(buf);
-            new ChallengePacket.ClientHandler().receive(client.getServer(), client.player, handler, buf, responseSender);
+            // 在客户端主线程处理
+            client.execute(() -> {
+                try {
+                    nety.ys.client.ClientPacketHandler.handleServerChallenge(packet);
+                } catch (Exception e) {
+                    TokenAuthMod.LOGGER.error("处理服务器挑战时出错", e);
+                }
+            });
         });
         
         TokenAuthMod.LOGGER.info("客户端数据包处理器注册完成");

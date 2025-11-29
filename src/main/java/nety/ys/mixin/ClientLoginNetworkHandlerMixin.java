@@ -23,11 +23,12 @@ public class ClientLoginNetworkHandlerMixin {
      * @param packet 登录成功数据包
      * @param ci 回调信息
      */
-    @Inject(method = "onLoginSuccess", at = @At("HEAD"))
-    private void onLoginSuccess(LoginSuccessS2CPacket packet, CallbackInfo ci) {
-        TokenAuthMod.LOGGER.info("客户端登录成功，玩家UUID: {}", packet.uuid());
-        
-        // 这里可以添加客户端登录成功后的处理逻辑
-        // 例如初始化客户端特定的认证状态
-    }
+    // 由于ClientLoginNetworkHandler中没有onGameJoin方法，我们暂时注释掉这个注入
+    // @Inject(method = "onGameJoin", at = @At("HEAD"))
+    // private void onGameJoin(CallbackInfo ci) {
+    //     TokenAuthMod.LOGGER.info("客户端登录成功");
+    //
+    //     // 这里可以添加客户端登录成功后的处理逻辑
+    //     // 例如初始化客户端特定的认证状态
+    // }
 }

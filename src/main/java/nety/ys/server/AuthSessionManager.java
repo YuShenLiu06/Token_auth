@@ -65,7 +65,7 @@ public class AuthSessionManager {
         
         // 初始化令牌生成器
         if (config.isSharedSecretConfigured()) {
-            tokenGenerator = new DynamicTokenGenerator(config.getSharedSecretBytes(), config.timeWindow);
+            tokenGenerator = new DynamicTokenGenerator(config.getSharedSecretBytes());
         } else {
             TokenAuthMod.LOGGER.warn("共享密钥未配置，令牌生成器未初始化");
         }
@@ -356,11 +356,30 @@ public class AuthSessionManager {
     
     /**
      * 获取被阻止的IP数量
-     * 
+     *
      * @return 被阻止的IP数量
      */
     public static int getBlockedIPCount() {
         return blockedIPs.size();
+    }
+    
+    /**
+     * 解除阻止IP地址
+     *
+     * @param ipAddress IP地址
+     */
+    public static void unblockIPAddress(String ipAddress) {
+        blockedIPs.remove(ipAddress);
+        TokenAuthMod.LOGGER.info("IP地址 {} 的阻止已解除", ipAddress);
+    }
+    
+    /**
+     * 获取被阻止的IP地址列表
+     *
+     * @return 被阻止的IP地址集合
+     */
+    public static java.util.Set<String> getBlockedIPs() {
+        return new java.util.HashSet<>(blockedIPs.keySet());
     }
     
     /**

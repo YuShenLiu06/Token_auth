@@ -36,7 +36,7 @@ public class ClientInitializer implements ClientModInitializer {
     private void registerClientEvents() {
         // 玩家加入服务器事件
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            ClientAuthEventHandler.onJoinServer(handler, sender, client);
+            ClientAuthEventHandler.onJoinServer(handler, client);
         });
         
         // 玩家断开连接事件

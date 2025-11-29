@@ -32,13 +32,13 @@ public class ClientPlayNetworkHandlerMixin {
     
     /**
      * 在玩家被踢出时处理事件
-     * 
+     *
      * @param reason 踢出原因
      * @param ci 回调信息
      */
     @Inject(method = "onDisconnect", at = @At("HEAD"))
-    private void onDisconnect(net.minecraft.text.Text reason, CallbackInfo ci) {
-        TokenAuthMod.LOGGER.info("客户端断开连接，原因: {}", reason.getString());
+    private void onDisconnect(net.minecraft.network.packet.s2c.play.DisconnectS2CPacket packet, CallbackInfo ci) {
+        TokenAuthMod.LOGGER.info("客户端断开连接，原因: {}", packet.getReason().getString());
         
         // 这里可以添加客户端断开连接后的处理逻辑
         // 例如清理客户端认证状态

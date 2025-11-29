@@ -168,16 +168,15 @@ public class TokenResponsePacket {
     
     /**
      * 客户端数据包处理器
+     * 这个类实际上不会被使用，因为我们在PacketRegistry中直接注册了处理器
      */
     public static class ClientHandler {
         /**
          * 处理服务器响应
-         * 
+         *
          * @param packet 令牌响应数据包
-         * @param client 客户端实例
-         * @param handler 网络处理器
          */
-        public static void handle(TokenResponsePacket packet, MinecraftClient client, ClientPlayNetworkHandler handler) {
+        public static void handle(TokenResponsePacket packet) {
             // 这个方法实际上不会被调用，因为TokenResponsePacket是客户端发送给服务器的
             // 实际处理逻辑在ServerHandler中
         }

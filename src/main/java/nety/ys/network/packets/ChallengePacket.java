@@ -160,12 +160,15 @@ public class ChallengePacket {
     
     /**
      * 客户端数据包处理器
+     * 这个类实际上不会被使用，因为我们在PacketRegistry中直接注册了处理器
      */
-    public static class ClientHandler implements ServerPlayNetworking.PlayChannelHandler {
-        @Override
-        public void receive(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler, PacketByteBuf buf, PacketSender responseSender) {
-            ChallengePacket packet = fromBytes(buf);
-            
+    public static class ClientHandler {
+        /**
+         * 处理服务器挑战
+         *
+         * @param packet 挑战数据包
+         */
+        public static void handle(ChallengePacket packet) {
             // 在客户端主线程处理
             MinecraftClient.getInstance().execute(() -> {
                 try {

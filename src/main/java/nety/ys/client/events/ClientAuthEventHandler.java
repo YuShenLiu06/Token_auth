@@ -9,19 +9,19 @@ import nety.ys.client.ClientTokenManager;
 /**
  * 客户端认证事件处理器
  * 处理客户端的各种认证相关事件
- * 
+ *
  * @author nety.ys
  */
 public class ClientAuthEventHandler {
     
     /**
      * 玩家加入服务器事件处理
-     * 
+     *
      * @param handler 网络处理器
      * @param sender 数据包发送器
      * @param client 客户端实例
      */
-    public static void onJoinServer(ClientPlayNetworkHandler handler, ClientPlayConnectionEvents.Init sender, MinecraftClient client) {
+    public static void onJoinServer(ClientPlayNetworkHandler handler, MinecraftClient client) {
         TokenAuthMod.LOGGER.info("客户端加入服务器");
         
         // 重新初始化客户端令牌管理器
@@ -33,7 +33,7 @@ public class ClientAuthEventHandler {
     
     /**
      * 玩家断开连接事件处理
-     * 
+     *
      * @param handler 网络处理器
      * @param client 客户端实例
      */
