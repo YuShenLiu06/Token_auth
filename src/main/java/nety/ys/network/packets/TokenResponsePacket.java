@@ -101,6 +101,9 @@ public class TokenResponsePacket {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.getNetworkHandler() != null) {
             client.getNetworkHandler().sendPacket(toPacket());
+            TokenAuthMod.LOGGER.debug("令牌响应数据包已发送到服务器");
+        } else {
+            TokenAuthMod.LOGGER.error("客户端网络处理器为空，无法发送令牌响应");
         }
     }
     

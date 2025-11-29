@@ -28,6 +28,7 @@ public class ClientInitializer implements ClientModInitializer {
         registerClientEvents();
         
         LOGGER.info("Token Auth Mod 客户端初始化完成！");
+        LOGGER.info("客户端认证系统准备就绪，等待服务器连接");
     }
     
     /**

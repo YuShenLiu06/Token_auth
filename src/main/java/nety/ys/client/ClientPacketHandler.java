@@ -20,6 +20,8 @@ public class ClientPacketHandler {
      */
     public static void handleServerChallenge(ChallengePacket packet) {
         try {
+            TokenAuthMod.LOGGER.info("开始处理服务器挑战");
+            
             // 获取客户端配置
             ModConfig.ClientConfig config = TokenAuthMod.getInstance().getConfigManager().getClientConfig();
             
@@ -31,7 +33,18 @@ public class ClientPacketHandler {
             
             // 检查挑战是否过期
             if (packet.isExpired(config.timeout)) {
-                TokenAuthMod.LOGGER.warn("收到过期的服务器挑战");
+                TokenAuthMod.LOGGER.warn("收到过期的服务器挑战，时间戳: {}, 当前时间: {}",
+                    packet.getTimestamp(), System.currentTimeMillis());
+                return;
+            }
+            
+            TokenAuthMod.LOGGER.info("挑战数据有效，开始生成令牌响应");
+            TokenAuthMod.LOGGER.info("服务器挑战: {}", java.util.Base64.getEncoder().encodeToString(packet.getChallenge()));
+            TokenAuthMod.LOGGER.info("挑战时间戳: {}", packet.getTimestamp());
+            
+            // 检查客户端令牌管理器状态
+            if (!ClientTokenManager.isInitialized()) {
+                TokenAuthMod.LOGGER.error("客户端令牌管理器未初始化");
                 return;
             }
             
@@ -46,6 +59,10 @@ public class ClientPacketHandler {
                 return;
             }
             
+            TokenAuthMod.LOGGER.info("令牌响应生成成功，长度: {} 字节", response.length);
+            TokenAuthMod.LOGGER.info("客户端生成的令牌: {}", java.util.Base64.getEncoder().encodeToString(response));
+            TokenAuthMod.LOGGER.info("令牌生成器状态: {}", ClientTokenManager.getTokenGenerator() != null ? "已初始化" : "未初始化");
+            
             // 创建令牌响应数据包
             TokenResponsePacket responsePacket = new TokenResponsePacket(
                 response,
@@ -55,7 +72,7 @@ public class ClientPacketHandler {
             // 发送响应给服务器
             responsePacket.send();
             
-            TokenAuthMod.LOGGER.debug("已向服务器发送令牌响应");
+            TokenAuthMod.LOGGER.info("已向服务器发送令牌响应");
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("处理服务器挑战时出错", e);
         }

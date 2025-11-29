@@ -27,6 +27,8 @@ public class AuthPacketHandler {
      */
     public static void handleTokenResponse(TokenResponsePacket packet, ServerPlayerEntity player, PacketSender responseSender) {
         try {
+            TokenAuthMod.LOGGER.info("收到玩家 {} 的令牌响应", player.getName().getString());
+            
             // 获取玩家IP地址
             InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
             
@@ -39,6 +41,20 @@ public class AuthPacketHandler {
                 return;
             }
             
+            TokenAuthMod.LOGGER.info("开始验证玩家 {} 的令牌响应", player.getName().getString());
+            TokenAuthMod.LOGGER.info("客户端发送的令牌: {}", java.util.Base64.getEncoder().encodeToString(packet.getTokenResponse()));
+            TokenAuthMod.LOGGER.info("挑战时间戳: {}", packet.getChallengeTimestamp());
+            
+            // 获取会话信息以便调试
+            AuthSessionManager.AuthSession session = AuthSessionHelper.findSessionByPlayer(player);
+            if (session != null) {
+                TokenAuthMod.LOGGER.info("服务器会话挑战: {}", java.util.Base64.getEncoder().encodeToString(session.getChallenge()));
+                TokenAuthMod.LOGGER.info("服务器会话时间戳: {}", session.getTimestamp());
+            } else {
+                // 打印所有活跃会话用于调试
+                AuthSessionHelper.debugPrintAllSessions();
+            }
+            
             // 验证令牌响应
             boolean isValid = AuthSessionManager.verifyTokenResponse(
                 player.getUuid().toString(),
@@ -49,9 +65,11 @@ public class AuthPacketHandler {
             
             if (isValid) {
                 // 认证成功
+                TokenAuthMod.LOGGER.info("玩家 {} 认证成功", player.getName().getString());
                 onAuthenticationSuccess(player);
             } else {
                 // 认证失败
+                TokenAuthMod.LOGGER.warn("玩家 {} 认证失败：令牌验证失败", player.getName().getString());
                 onAuthenticationFailure(player, "令牌验证失败");
             }
         } catch (Exception e) {
@@ -103,7 +121,7 @@ public class AuthPacketHandler {
             // 发送挑战给客户端
             challengePacket.send(player);
             
-            TokenAuthMod.LOGGER.debug("已向玩家 {} 发送认证挑战", player.getName().getString());
+            TokenAuthMod.LOGGER.info("已向玩家 {} 发送认证挑战", player.getName().getString());
             return true;
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("发送挑战给客户端时出错", e);

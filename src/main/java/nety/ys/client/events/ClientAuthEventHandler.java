@@ -23,9 +23,16 @@ public class ClientAuthEventHandler {
      */
     public static void onJoinServer(ClientPlayNetworkHandler handler, MinecraftClient client) {
         TokenAuthMod.LOGGER.info("客户端加入服务器");
+        TokenAuthMod.LOGGER.info("重新初始化客户端令牌管理器");
         
         // 重新初始化客户端令牌管理器
         ClientTokenManager.reinitialize();
+        
+        if (ClientTokenManager.isInitialized()) {
+            TokenAuthMod.LOGGER.info("客户端令牌管理器初始化成功，准备接收服务器挑战");
+        } else {
+            TokenAuthMod.LOGGER.error("客户端令牌管理器初始化失败");
+        }
         
         // 这里可以添加客户端加入服务器后的处理逻辑
         // 例如检查服务器是否支持令牌认证

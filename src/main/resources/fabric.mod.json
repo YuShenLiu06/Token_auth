@@ -25,6 +25,14 @@
 	"mixins": [
 		"token_auth.mixins.json"
 	],
+	"custom": {
+		"client": [
+			"token_auth.client.mixins.json"
+		],
+		"server": [
+			"token_auth.server.mixins.json"
+		]
+	},
 	"depends": {
 		"fabricloader": ">=0.14.21",
 		"minecraft": "~1.19.2",

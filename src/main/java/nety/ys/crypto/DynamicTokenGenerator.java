@@ -90,13 +90,10 @@ public class DynamicTokenGenerator {
         }
         
         try {
-            // 计算时间窗口
-            long timeWindow = timestamp / timeWindowMillis;
-            
-            // 创建数据缓冲区：挑战数据 + 时间窗口
+            // 创建数据缓冲区：挑战数据 + 时间戳
             ByteBuffer buffer = ByteBuffer.allocate(challenge.length + 8);
             buffer.put(challenge);
-            buffer.putLong(timeWindow);
+            buffer.putLong(timestamp);
             
             // 重置HMAC实例状态
             hmac.reset();
@@ -147,29 +144,21 @@ public class DynamicTokenGenerator {
         }
         
         try {
-            // 尝试验证当前时间窗口
+            // 尝试验证当前时间戳
             if (verifyToken(challenge, timestamp, token)) {
                 return true;
             }
             
-            // 尝试验证前一个时间窗口
-            if (verifyToken(challenge, timestamp - timeWindowMillis, token)) {
-                return true;
-            }
-            
-            // 尝试验证后一个时间窗口
-            if (verifyToken(challenge, timestamp + timeWindowMillis, token)) {
-                return true;
-            }
-            
-            // 如果时间容差大于一个时间窗口，尝试更多窗口
-            if (timeToleranceMillis > timeWindowMillis) {
-                int extraWindows = (int) (timeToleranceMillis / timeWindowMillis);
-                for (int i = 2; i <= extraWindows; i++) {
-                    if (verifyToken(challenge, timestamp - i * timeWindowMillis, token) ||
-                        verifyToken(challenge, timestamp + i * timeWindowMillis, token)) {
-                        return true;
-                    }
+            // 在时间容差范围内尝试验证
+            long toleranceSteps = timeToleranceMillis / 500; // 每步0.5秒，增加精度
+            for (long i = 1; i <= toleranceSteps; i++) {
+                // 验证前i*0.5秒
+                if (verifyToken(challenge, timestamp - i * 500, token)) {
+                    return true;
+                }
+                // 验证后i*0.5秒
+                if (verifyToken(challenge, timestamp + i * 500, token)) {
+                    return true;
                 }
             }
             

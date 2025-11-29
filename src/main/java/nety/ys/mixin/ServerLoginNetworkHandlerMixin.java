@@ -38,11 +38,14 @@ public class ServerLoginNetworkHandlerMixin {
      */
     @Inject(method = "onHello", at = @At("HEAD"), cancellable = true)
     private void onHello(LoginHelloC2SPacket packet, CallbackInfo ci) {
+        TokenAuthMod.LOGGER.info("收到客户端Hello包，开始处理登录认证");
+        
         // 获取服务器配置
         ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
         
         // 检查认证是否启用
         if (!config.enabled) {
+            TokenAuthMod.LOGGER.info("认证系统未启用，继续原版登录流程");
             // 认证系统未启用，继续原版流程
             return;
         }
@@ -50,9 +53,11 @@ public class ServerLoginNetworkHandlerMixin {
         try {
             // 获取客户端IP地址
             InetAddress clientAddress = ((InetSocketAddress) ((ServerLoginNetworkHandler)(Object)this).getConnection().getAddress()).getAddress();
+            TokenAuthMod.LOGGER.info("客户端IP地址: {}", clientAddress.toString());
             
             // 检查IP是否被阻止
             if (AuthSessionManager.isIPBlocked(clientAddress.toString())) {
+                TokenAuthMod.LOGGER.warn("IP地址 {} 已被阻止，拒绝连接", clientAddress.toString());
                 ((ServerLoginNetworkHandler)(Object)this).getConnection().disconnect(
                     Text.literal("您的IP地址已被阻止，请稍后再试")
                 );
@@ -62,6 +67,7 @@ public class ServerLoginNetworkHandlerMixin {
             
             // 检查IP白名单（如果启用）
             if (config.enableIPWhitelist && !config.ipWhitelist.contains(clientAddress.getHostAddress())) {
+                TokenAuthMod.LOGGER.warn("IP地址 {} 不在白名单中，拒绝连接", clientAddress.getHostAddress());
                 ((ServerLoginNetworkHandler)(Object)this).getConnection().disconnect(
                     Text.literal("您的IP地址不在白名单中")
                 );
@@ -71,6 +77,7 @@ public class ServerLoginNetworkHandlerMixin {
             
             // 生成连接ID
             String connectionId = UUID.randomUUID().toString();
+            TokenAuthMod.LOGGER.info("为连接 {} 生成连接ID: {}", clientAddress.toString(), connectionId);
             
             // 创建认证会话
             AuthSessionManager.AuthSession session = AuthSessionManager.createSession(
@@ -79,6 +86,7 @@ public class ServerLoginNetworkHandlerMixin {
             );
             
             if (session == null) {
+                TokenAuthMod.LOGGER.error("无法为连接 {} 创建认证会话", connectionId);
                 ((ServerLoginNetworkHandler)(Object)this).getConnection().disconnect(
                     Text.literal("认证系统错误，请稍后再试")
                 );
@@ -97,13 +105,11 @@ public class ServerLoginNetworkHandlerMixin {
                 );
                 
                 // 发送挑战给客户端
-                // 暂时跳过发送挑战，因为登录阶段的数据包发送比较复杂
-                // 我们将在玩家进入游戏阶段进行认证
-                TokenAuthMod.LOGGER.debug("已创建认证会话，等待玩家进入游戏");
-                challengeSent = true;
+                // 在登录阶段发送数据包比较复杂，我们将在玩家进入游戏阶段进行认证
+                TokenAuthMod.LOGGER.info("已创建认证会话，等待玩家进入游戏后发送挑战");
                 challengeSent = true;
             } catch (Exception e) {
-                TokenAuthMod.LOGGER.error("发送挑战数据包时出错", e);
+                TokenAuthMod.LOGGER.error("创建挑战数据包时出错", e);
             }
             
             if (!challengeSent) {
@@ -117,10 +123,10 @@ public class ServerLoginNetworkHandlerMixin {
             // 设置状态为等待认证响应
             // 由于State不可见，我们暂时跳过这一步
             
-            // 取消原版流程，等待客户端响应
-            ci.cancel();
+            // 不取消原版流程，让玩家正常进入游戏，然后在游戏阶段进行认证
+            // ci.cancel();
             
-            TokenAuthMod.LOGGER.debug("已向客户端 {} 发送认证挑战，等待响应", clientAddress.toString());
+            TokenAuthMod.LOGGER.info("已为客户端 {} 创建认证会话，等待玩家进入游戏", clientAddress.toString());
             
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("处理登录认证时出错", e);

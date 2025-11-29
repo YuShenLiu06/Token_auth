@@ -102,6 +102,9 @@ public class ChallengePacket {
     public void send(ServerPlayerEntity player) {
         if (player.networkHandler != null) {
             ServerPlayNetworking.send(player, ID, toBytes(this));
+            TokenAuthMod.LOGGER.debug("挑战数据包已发送给玩家 {}", player.getName().getString());
+        } else {
+            TokenAuthMod.LOGGER.error("玩家网络处理器为空，无法发送挑战数据包");
         }
     }
     
