@@ -25,14 +25,6 @@
 	"mixins": [
 		"token_auth.mixins.json"
 	],
-	"custom": {
-		"client": [
-			"token_auth.client.mixins.json"
-		],
-		"server": [
-			"token_auth.server.mixins.json"
-		]
-	},
 	"depends": {
 		"fabricloader": ">=0.14.21",
 		"minecraft": "~1.19.2",
@@ -40,10 +32,16 @@
 		"fabric-api": ">=0.76.0+1.19.2"
 	},
 	"custom": {
-		"server": {
-			"depends": {
-				"constraint": ">=1.0.0"
+		"client": [
+			"token_auth.client.mixins.json"
+		],
+		"server": [
+			"token_auth.server.mixins.json",
+			{
+				"depends": {
+					"constraint": ">=1.0.0"
+				}
 			}
-		}
+		]
 	}
 }
