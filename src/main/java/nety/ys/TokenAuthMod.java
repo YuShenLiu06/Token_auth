@@ -12,6 +12,7 @@ import nety.ys.network.PacketRegistry;
 import nety.ys.server.AuthSessionManager;
 import nety.ys.server.commands.TokenCommand;
 import nety.ys.server.events.AuthEventHandler;
+import nety.ys.server.constraint.ConstraintManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +89,18 @@ public class TokenAuthMod implements ModInitializer {
         
         // 初始化认证会话管理器
         AuthSessionManager.initialize();
+        
+        // 初始化约束系统（仅在服务端）
+        try {
+            // 检查constraint模组是否可用
+            Class.forName("nety.ys.constraint.api.ConstraintAPI");
+            ConstraintManager.initialize();
+            TokenAuthMod.LOGGER.info("约束系统初始化成功");
+        } catch (ClassNotFoundException e) {
+            TokenAuthMod.LOGGER.warn("约束模组未找到，约束功能将不可用");
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("初始化约束系统时出错", e);
+        }
         
         // 注册服务端数据包
         PacketRegistry.registerServerPackets();

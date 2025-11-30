@@ -6,6 +6,7 @@ import nety.ys.TokenAuthMod;
 import nety.ys.config.ModConfig;
 import nety.ys.network.packets.ChallengePacket;
 import nety.ys.network.packets.TokenResponsePacket;
+import nety.ys.server.constraint.ConstraintManager;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -144,6 +145,18 @@ public class AuthPacketHandler {
         
         // 标记玩家为已认证
         AuthSessionManager.markPlayerAsAuthenticated(player.getUuid().toString());
+        
+        // 移除玩家的约束（如果约束系统可用）
+        try {
+            // 检查约束系统是否可用
+            Class.forName("nety.ys.constraint.api.ConstraintAPI");
+            ConstraintManager.removeConstraintsFromPlayer(player);
+            TokenAuthMod.LOGGER.info("已为已认证玩家 {} 移除约束", player.getName().getString());
+        } catch (ClassNotFoundException e) {
+            TokenAuthMod.LOGGER.debug("约束系统不可用，跳过约束移除");
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("为玩家移除约束时出错", e);
+        }
         
         // 继续正常的游戏流程
         // 这里可能需要通知服务器继续处理玩家的登录

@@ -7,6 +7,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import nety.ys.TokenAuthMod;
 import nety.ys.server.AuthSessionManager;
+import nety.ys.server.constraint.ConstraintManager;
 
 /**
  * 认证事件处理器
@@ -33,6 +34,19 @@ public class AuthEventHandler {
             TokenAuthMod.LOGGER.info("玩家 {} 已通过认证，允许加入", player.getName().getString());
         } else {
             TokenAuthMod.LOGGER.info("玩家 {} 未通过认证，发送认证挑战", player.getName().getString());
+            
+            // 为未认证玩家添加约束（如果约束系统可用）
+            try {
+                // 检查约束系统是否可用
+                Class.forName("nety.ys.constraint.api.ConstraintAPI");
+                ConstraintManager.applyConstraintsToPlayer(player);
+                TokenAuthMod.LOGGER.info("已为未认证玩家 {} 添加约束", player.getName().getString());
+            } catch (ClassNotFoundException e) {
+                TokenAuthMod.LOGGER.debug("约束系统不可用，跳过约束添加");
+            } catch (Exception e) {
+                TokenAuthMod.LOGGER.error("为玩家添加约束时出错", e);
+            }
+            
             // 发送认证挑战给客户端
             boolean challengeSent = nety.ys.server.AuthPacketHandler.sendChallengeToClient(player);
             if (!challengeSent) {
