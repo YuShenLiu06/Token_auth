@@ -48,6 +48,10 @@ public class ClientPacketHandler {
                 return;
             }
             
+            // 更新认证状态为处理中
+            AuthStateManager.setState(AuthStateManager.AuthState.PROCESSING);
+            AuthStateManager.setStatusMessage("生成令牌响应...");
+            
             // 生成令牌响应
             byte[] response = ClientTokenManager.generateTokenResponse(
                 packet.getChallenge(),
@@ -73,6 +77,10 @@ public class ClientPacketHandler {
             responsePacket.send();
             
             TokenAuthMod.LOGGER.info("已向服务器发送令牌响应");
+            
+            // 更新认证状态为等待结果
+            AuthStateManager.setState(AuthStateManager.AuthState.WAITING_RESULT);
+            AuthStateManager.setStatusMessage("等待服务器验证...");
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("处理服务器挑战时出错", e);
         }

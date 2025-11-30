@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import nety.ys.TokenAuthMod;
+import nety.ys.network.packets.AuthResultPacket;
 import nety.ys.network.packets.ChallengePacket;
 import nety.ys.network.packets.TokenResponsePacket;
 
@@ -41,6 +42,15 @@ public class PacketRegistry {
             TokenAuthMod.LOGGER.info("收到服务器挑战数据包");
             ChallengePacket packet = ChallengePacket.fromBytes(buf);
             TokenAuthMod.LOGGER.debug("挑战数据包内容: {}", packet.toString());
+            
+            // 立即显示认证界面
+            nety.ys.client.AuthStateManager.setState(nety.ys.client.AuthStateManager.AuthState.CHALLENGE_RECEIVED);
+            nety.ys.client.AuthStateManager.setStatusMessage("正在处理服务器挑战...");
+            
+            // 设置认证屏幕
+            nety.ys.client.AuthScreen authScreen = new nety.ys.client.AuthScreen();
+            nety.ys.client.AuthStateManager.setAuthScreen(authScreen);
+            
             // 在客户端主线程处理
             client.execute(() -> {
                 try {
@@ -48,6 +58,22 @@ public class PacketRegistry {
                     nety.ys.client.ClientPacketHandler.handleServerChallenge(packet);
                 } catch (Exception e) {
                     TokenAuthMod.LOGGER.error("处理服务器挑战时出错", e);
+                }
+            });
+        });
+        
+        // 注册认证结果处理器
+        ClientPlayNetworking.registerGlobalReceiver(AuthResultPacket.ID, (client, handler, buf, responseSender) -> {
+            TokenAuthMod.LOGGER.info("收到服务器认证结果数据包");
+            AuthResultPacket packet = AuthResultPacket.fromBytes(buf);
+            TokenAuthMod.LOGGER.debug("认证结果数据包内容: 成功={}, 消息={}",
+                packet.isSuccess(), packet.getMessage());
+            // 在客户端主线程处理
+            client.execute(() -> {
+                try {
+                    AuthResultPacket.ClientHandler.handle(packet);
+                } catch (Exception e) {
+                    TokenAuthMod.LOGGER.error("处理认证结果时出错", e);
                 }
             });
         });
@@ -75,6 +101,9 @@ public class PacketRegistry {
         
         // 注销服务器挑战处理器
         ClientPlayNetworking.unregisterGlobalReceiver(ChallengePacket.ID);
+        
+        // 注销认证结果处理器
+        ClientPlayNetworking.unregisterGlobalReceiver(AuthResultPacket.ID);
         
         TokenAuthMod.LOGGER.info("客户端数据包处理器注销完成");
     }
