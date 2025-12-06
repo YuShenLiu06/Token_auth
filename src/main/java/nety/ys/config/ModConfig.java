@@ -40,6 +40,12 @@ public class ModConfig {
         public boolean logSuccessfulAuth = true;
         public boolean logFailedAttempts = true;
         
+        // CSV记录设置
+        public boolean enableCSVLogging = false; // 默认关闭，需要用户手动启用
+        public String csvFileName = "failed_auth_attempts.csv";
+        public boolean logTimeoutAttempts = true; // 是否记录认证超时
+        public boolean includeGeoLocation = true; // 是否包含地理位置信息
+        
         /**
          * 获取共享密钥的字节数组形式
          * 

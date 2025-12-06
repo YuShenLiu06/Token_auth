@@ -143,7 +143,10 @@ public class TokenCommand {
             status.append(Text.literal("§a阻止持续时间: §b" + config.blockDurationMinutes + " 分钟\n"));
             
             // 日志设置
-            status.append(Text.literal("§a认证日志: " + (config.enableAuthLogging ? "§2启用" : "§c禁用")));
+            status.append(Text.literal("§a认证日志: " + (config.enableAuthLogging ? "§2启用" : "§c禁用") + "\n"));
+            
+            // CSV记录设置
+            status.append(Text.literal("§aCSV记录: " + (config.enableCSVLogging ? "§2启用" : "§c禁用")));
             
             context.getSource().sendFeedback(status, false);
             return 1;

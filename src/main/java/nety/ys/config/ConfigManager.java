@@ -221,6 +221,12 @@ public class ConfigManager {
         serverConfig.logSuccessfulAuth = Boolean.parseBoolean(props.getProperty("logging.logSuccessfulAuth", "true"));
         serverConfig.logFailedAttempts = Boolean.parseBoolean(props.getProperty("logging.logFailedAttempts", "true"));
         
+        // CSV记录设置
+        serverConfig.enableCSVLogging = Boolean.parseBoolean(props.getProperty("enableCSVLogging", "false"));
+        serverConfig.csvFileName = props.getProperty("csvFileName", "failed_auth_attempts.csv");
+        serverConfig.logTimeoutAttempts = Boolean.parseBoolean(props.getProperty("logTimeoutAttempts", "true"));
+        serverConfig.includeGeoLocation = Boolean.parseBoolean(props.getProperty("includeGeoLocation", "true"));
+        
         return serverConfig;
     }
     
@@ -268,6 +274,12 @@ public class ConfigManager {
         props.setProperty("logging.enableAuthLogging", String.valueOf(serverConfig.enableAuthLogging));
         props.setProperty("logging.logSuccessfulAuth", String.valueOf(serverConfig.logSuccessfulAuth));
         props.setProperty("logging.logFailedAttempts", String.valueOf(serverConfig.logFailedAttempts));
+        
+        // CSV记录设置
+        props.setProperty("enableCSVLogging", String.valueOf(serverConfig.enableCSVLogging));
+        props.setProperty("csvFileName", serverConfig.csvFileName);
+        props.setProperty("logTimeoutAttempts", String.valueOf(serverConfig.logTimeoutAttempts));
+        props.setProperty("includeGeoLocation", String.valueOf(serverConfig.includeGeoLocation));
     }
     
     /**

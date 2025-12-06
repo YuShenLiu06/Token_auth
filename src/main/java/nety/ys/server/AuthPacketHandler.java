@@ -7,6 +7,8 @@ import nety.ys.config.ModConfig;
 import nety.ys.network.packets.ChallengePacket;
 import nety.ys.network.packets.TokenResponsePacket;
 import nety.ys.server.constraint.ConstraintManager;
+import nety.ys.util.FailedAuthLogger;
+import nety.ys.config.SimpleConfigManager;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -34,7 +36,8 @@ public class AuthPacketHandler {
             InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
             
             // 获取服务器配置
-            ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+            SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+            ModConfig.ServerConfig config = configManager.getServerConfig();
             
             // 检查认证是否启用
             if (!config.enabled) {
@@ -142,7 +145,8 @@ public class AuthPacketHandler {
      * @param player 玩家实体
      */
     private static void onAuthenticationSuccess(ServerPlayerEntity player) {
-        ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+        SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+        ModConfig.ServerConfig config = configManager.getServerConfig();
         
         // 记录成功日志
         if (config.enableAuthLogging && config.logSuccessfulAuth) {
@@ -175,7 +179,8 @@ public class AuthPacketHandler {
      * @param reason 失败原因
      */
     private static void onAuthenticationFailure(ServerPlayerEntity player, String reason) {
-        ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+        SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+        ModConfig.ServerConfig config = configManager.getServerConfig();
         
         // 记录失败日志
         if (config.enableAuthLogging && config.logFailedAttempts) {
@@ -184,6 +189,9 @@ public class AuthPacketHandler {
         
         // 获取玩家IP地址
         InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
+        
+        // 记录到CSV文件
+        FailedAuthLogger.logFailedAuth(player.getName().getString(), playerAddress, reason);
         
         // 增加失败尝试次数
         int attempts = AuthSessionManager.incrementFailedAttempt(playerAddress.toString());

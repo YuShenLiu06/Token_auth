@@ -8,6 +8,11 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import nety.ys.TokenAuthMod;
 import nety.ys.server.AuthSessionManager;
 import nety.ys.server.constraint.ConstraintManager;
+import nety.ys.util.FailedAuthLogger;
+import nety.ys.config.SimpleConfigManager;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * 认证事件处理器
@@ -69,7 +74,8 @@ public class AuthEventHandler {
      */
     private static void scheduleAuthenticationTimeout(ServerPlayerEntity player, MinecraftServer server) {
         // 获取服务器配置
-        nety.ys.config.ModConfig.ServerConfig config = nety.ys.TokenAuthMod.getInstance().getConfigManager().getServerConfig();
+        SimpleConfigManager configManager = (SimpleConfigManager) nety.ys.TokenAuthMod.getInstance().getConfigManager();
+        nety.ys.config.ModConfig.ServerConfig config = configManager.getServerConfig();
         
         TokenAuthMod.LOGGER.info("安排玩家 {} 的认证超时检查，超时时间: {} 毫秒",
             player.getName().getString(), config.responseTimeout);
@@ -83,6 +89,19 @@ public class AuthEventHandler {
                     // 检查玩家是否已通过认证
                     if (!AuthSessionManager.isPlayerAuthenticated(player.getUuid().toString()) && player.networkHandler != null) {
                         TokenAuthMod.LOGGER.warn("玩家 {} 认证超时，断开连接", player.getName().getString());
+                        
+                        // 检查是否需要记录认证超时到CSV文件
+                        if (config.logTimeoutAttempts) {
+                            // 记录认证超时到CSV文件
+                            try {
+                                // 获取玩家IP地址
+                                InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
+                                FailedAuthLogger.logFailedAuth(player.getName().getString(), playerAddress, "认证超时");
+                            } catch (Exception e) {
+                                TokenAuthMod.LOGGER.error("记录认证超时到CSV时出错", e);
+                            }
+                        }
+                        
                         player.networkHandler.disconnect(net.minecraft.text.Text.literal("认证超时，请使用支持令牌认证的客户端"));
                     } else {
                         TokenAuthMod.LOGGER.info("玩家 {} 已通过认证或已断开连接，取消超时检查", player.getName().getString());

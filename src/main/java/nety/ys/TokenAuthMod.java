@@ -8,9 +8,11 @@ import net.fabricmc.loader.api.FabricLoader;
 import nety.ys.client.ClientInitializer;
 import nety.ys.client.ClientTokenManager;
 import nety.ys.config.ConfigManager;
+import nety.ys.config.SimpleConfigManager;
 import nety.ys.network.PacketRegistry;
 import nety.ys.server.AuthSessionManager;
 import nety.ys.server.commands.TokenCommand;
+import nety.ys.server.commands.TokenCommandSimple;
 import nety.ys.server.events.AuthEventHandler;
 import nety.ys.server.constraint.ConstraintManager;
 import org.slf4j.Logger;
@@ -36,11 +38,11 @@ public class TokenAuthMod implements ModInitializer {
     /**
      * 配置管理器
      */
-    private ConfigManager configManager;
+    private SimpleConfigManager configManager;
     
     /**
      * 获取模组实例
-     * 
+     *
      * @return 模组实例
      */
     public static TokenAuthMod getInstance() {
@@ -49,10 +51,10 @@ public class TokenAuthMod implements ModInitializer {
     
     /**
      * 获取配置管理器
-     * 
+     *
      * @return 配置管理器实例
      */
-    public ConfigManager getConfigManager() {
+    public SimpleConfigManager getConfigManager() {
         return configManager;
     }
     
@@ -66,7 +68,8 @@ public class TokenAuthMod implements ModInitializer {
         LOGGER.info("Token Auth Mod 正在初始化...");
         
         // 初始化配置管理器
-        configManager = new ConfigManager();
+        // 使用SimpleConfigManager以支持CSV记录功能
+        configManager = new SimpleConfigManager();
         
         // 根据环境初始化
         if (FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.SERVER) {
@@ -99,6 +102,7 @@ public class TokenAuthMod implements ModInitializer {
         // 注册管理命令
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             TokenCommand.register(dispatcher);
+            TokenCommandSimple.register(dispatcher);
         });
         
         // 延迟初始化约束系统，确保ConstraintAPI已经完全初始化

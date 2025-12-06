@@ -51,8 +51,18 @@ public class SimpleConfigManager {
             // 确保配置目录存在
             ModConfig.ensureConfigDirExists();
             
-            // 获取配置文件路径
-            Path configPath = ModConfig.getConfigDir().resolve("token-auth-server.properties");
+            // 获取配置文件路径 - 优先使用运行时目录，如果不存在则使用源码目录中的资源
+            Path configDir;
+            try {
+                // 尝试获取运行时配置目录
+                configDir = ModConfig.getConfigDir();
+            } catch (Exception e) {
+                // 如果获取失败，使用源码目录中的资源目录作为后备
+                configDir = Path.of("src/main/resources/config");
+                TokenAuthMod.LOGGER.warn("无法获取运行时配置目录，使用源码资源目录作为后备: {}", e.getMessage());
+            }
+            
+            Path configPath = configDir.resolve("token-auth-server.properties");
             
             // 创建配置文件对象
             Properties props = new Properties();
@@ -90,8 +100,18 @@ public class SimpleConfigManager {
             // 确保配置目录存在
             ModConfig.ensureConfigDirExists();
             
-            // 获取配置文件路径
-            Path configPath = ModConfig.getConfigDir().resolve("token-auth-client.properties");
+            // 获取配置文件路径 - 优先使用运行时目录，如果不存在则使用源码目录中的资源
+            Path configDir;
+            try {
+                // 尝试获取运行时配置目录
+                configDir = ModConfig.getConfigDir();
+            } catch (Exception e) {
+                // 如果获取失败，使用源码目录中的资源目录作为后备
+                configDir = Path.of("src/main/resources/config");
+                TokenAuthMod.LOGGER.warn("无法获取运行时配置目录，使用源码资源目录作为后备: {}", e.getMessage());
+            }
+            
+            Path configPath = configDir.resolve("token-auth-client.properties");
             
             // 创建配置文件对象
             Properties props = new Properties();
@@ -214,6 +234,12 @@ public class SimpleConfigManager {
         serverConfig.logSuccessfulAuth = Boolean.parseBoolean(props.getProperty("logging.logSuccessfulAuth", "true"));
         serverConfig.logFailedAttempts = Boolean.parseBoolean(props.getProperty("logging.logFailedAttempts", "true"));
         
+        // CSV记录设置
+        serverConfig.enableCSVLogging = Boolean.parseBoolean(props.getProperty("enableCSVLogging", "false"));
+        serverConfig.csvFileName = props.getProperty("csvFileName", "failed_auth_attempts.csv");
+        serverConfig.logTimeoutAttempts = Boolean.parseBoolean(props.getProperty("logTimeoutAttempts", "true"));
+        serverConfig.includeGeoLocation = Boolean.parseBoolean(props.getProperty("includeGeoLocation", "true"));
+        
         return serverConfig;
     }
     
@@ -261,6 +287,12 @@ public class SimpleConfigManager {
         props.setProperty("logging.enableAuthLogging", String.valueOf(serverConfig.enableAuthLogging));
         props.setProperty("logging.logSuccessfulAuth", String.valueOf(serverConfig.logSuccessfulAuth));
         props.setProperty("logging.logFailedAttempts", String.valueOf(serverConfig.logFailedAttempts));
+        
+        // CSV记录设置
+        props.setProperty("enableCSVLogging", String.valueOf(serverConfig.enableCSVLogging));
+        props.setProperty("csvFileName", serverConfig.csvFileName);
+        props.setProperty("logTimeoutAttempts", String.valueOf(serverConfig.logTimeoutAttempts));
+        props.setProperty("includeGeoLocation", String.valueOf(serverConfig.includeGeoLocation));
     }
     
     /**

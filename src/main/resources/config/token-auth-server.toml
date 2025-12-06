@@ -30,3 +30,13 @@ enableAuthLogging = true
 logSuccessfulAuth = true
 # 是否记录失败的认证尝试
 logFailedAttempts = true
+
+[csv_logging]
+# 是否启用CSV记录功能（默认关闭，需要手动启用）
+enableCSVLogging = true
+# CSV文件名（自动添加.csv后缀）
+# 是否在认证超时时也记录到CSV文件
+logTimeoutAttempts = true
+csvFileName = "failed_auth_attempts.csv"
+# 是否包含地理位置信息（需要网络请求）
+includeGeoLocation = true
