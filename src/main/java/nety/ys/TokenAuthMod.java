@@ -19,6 +19,10 @@ import nety.ys.util.DebugLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Token Auth Mod 主入口类
  * 负责初始化客户端和服务端的认证系统组件
@@ -35,6 +39,11 @@ public class TokenAuthMod implements ModInitializer {
      * 模组实例
      */
     private static TokenAuthMod INSTANCE;
+    
+    /**
+     * 模组版本号
+     */
+    private static String MOD_VERSION;
     
     /**
      * 配置管理器
@@ -66,6 +75,10 @@ public class TokenAuthMod implements ModInitializer {
     @Override
     public void onInitialize() {
         INSTANCE = this;
+        
+        // 加载版本号
+        loadVersion();
+        
         LOGGER.info("Token Auth Mod 正在初始化...");
         
         // 初始化配置管理器
@@ -79,7 +92,26 @@ public class TokenAuthMod implements ModInitializer {
             initializeClient();
         }
         
-        LOGGER.info("Token Auth Mod 初始化完成！");
+        LOGGER.info("Token Auth Mod 初始化完成！版本: " + MOD_VERSION);
+    }
+    
+    /**
+     * 从版本属性文件加载版本号
+     */
+    private void loadVersion() {
+        try (InputStream stream = getClass().getResourceAsStream("/version.properties")) {
+            if (stream != null) {
+                Properties props = new Properties();
+                props.load(stream);
+                MOD_VERSION = props.getProperty("mod.version", "未知版本");
+            } else {
+                MOD_VERSION = "未知版本";
+                LOGGER.warn("无法找到版本属性文件，使用默认版本");
+            }
+        } catch (IOException e) {
+            MOD_VERSION = "未知版本";
+            LOGGER.error("读取版本信息时出错", e);
+        }
     }
     
     /**
