@@ -4,6 +4,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import nety.ys.TokenAuthMod;
 import nety.ys.server.AuthSessionManager;
+import nety.ys.util.DebugLogger;
 
 /**
  * 认证约束条件
@@ -40,9 +41,9 @@ public class AuthenticationConstraintCondition implements nety.ys.constraint.api
         boolean shouldConstrain = !isAuthenticated;
         
         if (shouldConstrain) {
-            TokenAuthMod.LOGGER.debug("玩家 {} 未认证，应用约束类型: {}", player.getName().getString(), constraintType);
+            DebugLogger.debug("玩家 {} 未认证，应用约束类型: {}", player.getName().getString(), constraintType);
         } else {
-            TokenAuthMod.LOGGER.debug("玩家 {} 已认证，不应用约束", player.getName().getString());
+            DebugLogger.debug("玩家 {} 已认证，不应用约束", player.getName().getString());
         }
         
         return shouldConstrain;

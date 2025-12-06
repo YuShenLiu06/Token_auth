@@ -47,8 +47,8 @@ public class EmailNotifier {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
-                TokenAuthMod.LOGGER.info("正在发送非法闯入报告邮件...");
-                TokenAuthMod.LOGGER.info("邮件配置检查 - SMTP服务器: {}, 端口: {}, 用户名: {}, 发件人: {}, 收件人: {}", 
+                DebugLogger.email("正在发送非法闯入报告邮件...");
+                DebugLogger.email("邮件配置检查 - SMTP服务器: {}, 端口: {}, 用户名: {}, 发件人: {}, 收件人: {}",
                     config.getSmtpHost(), config.getSmtpPort(), config.getUsername(), config.getFromAddress(), config.getToAddress());
                 
                 // 验证配置
@@ -59,13 +59,13 @@ public class EmailNotifier {
                 
                 // 构建邮件内容
                 String emailContent = buildEmailContent(serverName, playerName, timestamp, ipAddress, location, reason);
-                TokenAuthMod.LOGGER.info("邮件内容: {}", emailContent);
+                DebugLogger.email("邮件内容: {}", emailContent);
                 
                 // 发送邮件
                 boolean success = sendEmailWithJavaMail(config, "TokenAuth 非法闯入警报 - " + serverName, emailContent);
                 
                 if (success) {
-                    TokenAuthMod.LOGGER.info("非法闯入报告邮件发送成功");
+                    DebugLogger.email("非法闯入报告邮件发送成功");
                 } else {
                     TokenAuthMod.LOGGER.error("非法闯入报告邮件发送失败");
                 }
@@ -89,7 +89,7 @@ public class EmailNotifier {
      */
     private static boolean sendEmailWithJavaMail(EmailConfig config, String subject, String content) {
         try {
-            TokenAuthMod.LOGGER.info("使用JavaMail API发送邮件到: {}", config.getToAddress());
+            DebugLogger.email("使用JavaMail API发送邮件到: {}", config.getToAddress());
             
             // 创建邮件会话属性
             Properties props = new Properties();
@@ -139,7 +139,7 @@ public class EmailNotifier {
             // 发送邮件
             Transport.send(message);
             
-            TokenAuthMod.LOGGER.info("邮件发送成功");
+            DebugLogger.email("邮件发送成功");
             return true;
             
         } catch (Exception e) {

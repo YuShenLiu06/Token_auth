@@ -10,6 +10,7 @@ import nety.ys.server.constraint.ConstraintManager;
 import nety.ys.util.FailedAuthLogger;
 import nety.ys.config.SimpleConfigManager;
 import nety.ys.server.AuthAlertService;
+import nety.ys.util.DebugLogger;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -31,7 +32,7 @@ public class AuthPacketHandler {
      */
     public static void handleTokenResponse(TokenResponsePacket packet, ServerPlayerEntity player, PacketSender responseSender) {
         try {
-            TokenAuthMod.LOGGER.info("收到玩家 {} 的令牌响应", player.getName().getString());
+            DebugLogger.auth("收到玩家 {} 的令牌响应", player.getName().getString());
             
             // 获取玩家IP地址
             InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
@@ -46,15 +47,15 @@ public class AuthPacketHandler {
                 return;
             }
             
-            TokenAuthMod.LOGGER.info("开始验证玩家 {} 的令牌响应", player.getName().getString());
-            TokenAuthMod.LOGGER.info("客户端发送的令牌: {}", java.util.Base64.getEncoder().encodeToString(packet.getTokenResponse()));
-            TokenAuthMod.LOGGER.info("挑战时间戳: {}", packet.getChallengeTimestamp());
+            DebugLogger.auth("开始验证玩家 {} 的令牌响应", player.getName().getString());
+            DebugLogger.debug("客户端发送的令牌: {}", java.util.Base64.getEncoder().encodeToString(packet.getTokenResponse()));
+            DebugLogger.debug("挑战时间戳: {}", packet.getChallengeTimestamp());
             
             // 获取会话信息以便调试
             AuthSessionManager.AuthSession session = AuthSessionHelper.findSessionByPlayer(player);
             if (session != null) {
-                TokenAuthMod.LOGGER.info("服务器会话挑战: {}", java.util.Base64.getEncoder().encodeToString(session.getChallenge()));
-                TokenAuthMod.LOGGER.info("服务器会话时间戳: {}", session.getTimestamp());
+                DebugLogger.debug("服务器会话挑战: {}", java.util.Base64.getEncoder().encodeToString(session.getChallenge()));
+                DebugLogger.debug("服务器会话时间戳: {}", session.getTimestamp());
             } else {
                 // 打印所有活跃会话用于调试
                 AuthSessionHelper.debugPrintAllSessions();
@@ -132,7 +133,7 @@ public class AuthPacketHandler {
             // 发送挑战给客户端
             challengePacket.send(player);
             
-            TokenAuthMod.LOGGER.info("已向玩家 {} 发送认证挑战", player.getName().getString());
+            DebugLogger.auth("已向玩家 {} 发送认证挑战", player.getName().getString());
             return true;
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("发送挑战给客户端时出错", e);
@@ -162,9 +163,9 @@ public class AuthPacketHandler {
             // 检查约束系统是否可用
             Class.forName("nety.ys.constraint.api.ConstraintAPI");
             ConstraintManager.removeConstraintsFromPlayer(player);
-            TokenAuthMod.LOGGER.info("已为已认证玩家 {} 移除约束", player.getName().getString());
+            DebugLogger.debug("已为已认证玩家 {} 移除约束", player.getName().getString());
         } catch (ClassNotFoundException e) {
-            TokenAuthMod.LOGGER.debug("约束系统不可用，跳过约束移除");
+            DebugLogger.debug("约束系统不可用，跳过约束移除");
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("为玩家移除约束时出错", e);
         }

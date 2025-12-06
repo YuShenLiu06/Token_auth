@@ -15,6 +15,7 @@ import nety.ys.server.commands.TokenCommand;
 import nety.ys.server.commands.TokenCommandSimple;
 import nety.ys.server.events.AuthEventHandler;
 import nety.ys.server.constraint.ConstraintManager;
+import nety.ys.util.DebugLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,6 +104,7 @@ public class TokenAuthMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             TokenCommand.register(dispatcher);
             TokenCommandSimple.register(dispatcher);
+            nety.ys.server.commands.DebugLoggerTestCommand.register(dispatcher);
         });
         
         // 延迟初始化约束系统，确保ConstraintAPI已经完全初始化
@@ -125,7 +127,7 @@ public class TokenAuthMod implements ModInitializer {
             // 检查ConstraintAPI是否已经初始化
             if (nety.ys.constraint.api.ConstraintAPI.isInitialized()) {
                 ConstraintManager.initialize();
-                TokenAuthMod.LOGGER.info("约束系统初始化成功");
+                DebugLogger.debug("约束系统初始化成功");
             } else {
                 TokenAuthMod.LOGGER.warn("ConstraintAPI尚未初始化，约束功能将不可用");
             }
@@ -160,12 +162,12 @@ public class TokenAuthMod implements ModInitializer {
     private void registerServerEvents() {
         // 服务器生命周期事件
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
-            LOGGER.info("服务器启动中，认证系统准备就绪");
+            DebugLogger.debug("服务器启动中，认证系统准备就绪");
             AuthSessionManager.onServerStarting(server);
         });
         
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
-            LOGGER.info("服务器已停止，清理认证会话");
+            DebugLogger.debug("服务器已停止，清理认证会话");
             AuthSessionManager.onServerStopped();
         });
         

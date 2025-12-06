@@ -39,6 +39,7 @@ public class ModConfig {
         public boolean enableAuthLogging = true;
         public boolean logSuccessfulAuth = true;
         public boolean logFailedAttempts = true;
+        public boolean debugMode = false; // 调试模式开关
         
         // CSV记录设置
         public boolean enableCSVLogging = false; // 默认关闭，需要用户手动启用

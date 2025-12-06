@@ -3,6 +3,7 @@ package nety.ys.server;
 import net.minecraft.server.network.ServerPlayerEntity;
 import nety.ys.TokenAuthMod;
 import nety.ys.crypto.DynamicTokenGenerator;
+import nety.ys.util.DebugLogger;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -30,16 +31,16 @@ public class AuthSessionHelper {
             // 获取所有活跃会话
             Collection<AuthSessionManager.AuthSession> sessions = getAllActiveSessions();
             
-            TokenAuthMod.LOGGER.info("查找玩家会话 - 玩家: {}, IP: {}, 活跃会话数: {}", 
+            DebugLogger.debug("查找玩家会话 - 玩家: {}, IP: {}, 活跃会话数: {}",
                 player.getName().getString(), playerAddress.toString(), sessions.size());
             
             // 查找匹配IP地址的会话
             for (AuthSessionManager.AuthSession session : sessions) {
-                TokenAuthMod.LOGGER.debug("检查会话 - IP: {}, 时间戳: {}", 
+                DebugLogger.debug("检查会话 - IP: {}, 时间戳: {}",
                     session.getAddress().toString(), session.getTimestamp());
                 
                 if (session.getAddress().equals(playerAddress)) {
-                    TokenAuthMod.LOGGER.info("找到匹配的会话 - 玩家: {}, IP: {}, 会话时间戳: {}", 
+                    DebugLogger.debug("找到匹配的会话 - 玩家: {}, IP: {}, 会话时间戳: {}",
                         player.getName().getString(), playerAddress.toString(), session.getTimestamp());
                     return session;
                 }
@@ -69,7 +70,7 @@ public class AuthSessionHelper {
             }
             
             byte[] secretBytes = config.getSharedSecretBytes();
-            TokenAuthMod.LOGGER.info("服务器共享密钥已配置，长度: {} 字节", secretBytes.length);
+            DebugLogger.debug("服务器共享密钥已配置，长度: {} 字节", secretBytes.length);
             
             // 尝试创建令牌生成器以验证密钥有效性
             new DynamicTokenGenerator(secretBytes);
@@ -107,17 +108,17 @@ public class AuthSessionHelper {
     public static void debugPrintAllSessions() {
         try {
             Collection<AuthSessionManager.AuthSession> sessions = getAllActiveSessions();
-            TokenAuthMod.LOGGER.info("=== 当前活跃会话 (总数: {}) ===", sessions.size());
+            DebugLogger.debug("=== 当前活跃会话 (总数: {}) ===", sessions.size());
             
             for (AuthSessionManager.AuthSession session : sessions) {
-                TokenAuthMod.LOGGER.info("会话 - ID: {}, IP: {}, 时间戳: {}, 挑战长度: {}", 
+                DebugLogger.debug("会话 - ID: {}, IP: {}, 时间戳: {}, 挑战长度: {}",
                     session.getConnectionId(),
                     session.getAddress().toString(),
                     session.getTimestamp(),
                     session.getChallenge().length);
             }
             
-            TokenAuthMod.LOGGER.info("=== 会话信息打印完成 ===");
+            DebugLogger.debug("=== 会话信息打印完成 ===");
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("打印会话信息时出错", e);
         }

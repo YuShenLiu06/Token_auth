@@ -35,57 +35,57 @@ public class FailedAuthLogger {
      * @param reason 失败原因
      */
     public static void logFailedAuth(String playerName, InetAddress ipAddress, String reason) {
-        TokenAuthMod.LOGGER.info("收到认证失败记录请求: 玩家={}, IP={}, 原因={}", playerName, ipAddress.getHostAddress(), reason);
+        DebugLogger.csv("收到认证失败记录请求: 玩家={}, IP={}, 原因={}", playerName, ipAddress.getHostAddress(), reason);
         
         SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
         ModConfig.ServerConfig config = configManager.getServerConfig();
         
         // 检查是否启用了CSV记录
         if (!config.enableCSVLogging) {
-            TokenAuthMod.LOGGER.info("CSV记录功能已禁用，跳过记录");
+            DebugLogger.csv("CSV记录功能已禁用，跳过记录");
             return;
         }
         
-        TokenAuthMod.LOGGER.info("CSV记录功能已启用，开始记录认证失败信息");
+        DebugLogger.csv("CSV记录功能已启用，开始记录认证失败信息");
         
         try {
             fileLock.lock();
             
             // 获取CSV文件路径
             Path csvPath = getCSVFilePath(config.csvFileName);
-            TokenAuthMod.LOGGER.info("CSV文件路径: {}", csvPath.toAbsolutePath());
+            DebugLogger.csv("CSV文件路径: {}", csvPath.toAbsolutePath());
             
             // 检查文件是否存在，如果不存在则创建并写入标题行
             boolean fileExists = Files.exists(csvPath);
-            TokenAuthMod.LOGGER.info("CSV文件是否存在: {}", fileExists);
+            DebugLogger.csv("CSV文件是否存在: {}", fileExists);
             
             if (!fileExists) {
-                TokenAuthMod.LOGGER.info("CSV文件不存在，创建新文件");
+                DebugLogger.csv("CSV文件不存在，创建新文件");
                 // 确保目录存在
                 Files.createDirectories(csvPath.getParent());
-                TokenAuthMod.LOGGER.info("确保目录存在: {}", csvPath.getParent().toAbsolutePath());
+                DebugLogger.csv("确保目录存在: {}", csvPath.getParent().toAbsolutePath());
                 
                 // 创建文件并写入标题行
                 try (BufferedWriter writer = Files.newBufferedWriter(csvPath)) {
                     writer.write(CSV_HEADER);
                     writer.newLine();
-                    TokenAuthMod.LOGGER.info("已写入CSV文件标题行");
+                    DebugLogger.csv("已写入CSV文件标题行");
                 }
             }
             
             // 获取当前时间
             String loginTime = IPGeolocationUtil.getCurrentChinaTime();
-            TokenAuthMod.LOGGER.info("当前登录时间: {}", loginTime);
+            DebugLogger.csv("当前登录时间: {}", loginTime);
             
             // 获取地理位置信息
             String geoLocation = "未知位置";
             if (config.includeGeoLocation) {
-                TokenAuthMod.LOGGER.info("正在获取IP {} 的地理位置信息...", ipAddress.getHostAddress());
+                DebugLogger.csv("正在获取IP {} 的地理位置信息...", ipAddress.getHostAddress());
                 IPGeolocationUtil.GeoLocationInfo geoInfo = IPGeolocationUtil.getGeoLocation(ipAddress);
                 geoLocation = geoInfo.getFullLocation();
-                TokenAuthMod.LOGGER.info("获取地理位置信息成功: {}", geoLocation);
+                DebugLogger.csv("获取地理位置信息成功: {}", geoLocation);
             } else {
-                TokenAuthMod.LOGGER.info("已禁用地理位置信息获取");
+                DebugLogger.csv("已禁用地理位置信息获取");
             }
             
             // 构建CSV行
@@ -96,17 +96,17 @@ public class FailedAuthLogger {
                 escapeCSVField(geoLocation)
             );
             
-            TokenAuthMod.LOGGER.info("准备写入CSV行: {}", csvLine);
+            DebugLogger.csv("准备写入CSV行: {}", csvLine);
             
             // 写入CSV文件
             try (BufferedWriter writer = Files.newBufferedWriter(csvPath,
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
                 writer.write(csvLine);
                 writer.newLine();
-                TokenAuthMod.LOGGER.info("CSV行写入成功");
+                DebugLogger.csv("CSV行写入成功");
             }
             
-            TokenAuthMod.LOGGER.info("已将玩家 {} 的认证失败信息记录到CSV文件", playerName);
+            DebugLogger.csv("已将玩家 {} 的认证失败信息记录到CSV文件", playerName);
             
         } catch (IOException e) {
             TokenAuthMod.LOGGER.error("写入认证失败CSV记录时出错", e);

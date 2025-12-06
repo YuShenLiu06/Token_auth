@@ -5,6 +5,7 @@ import net.minecraft.util.Identifier;
 import nety.ys.TokenAuthMod;
 import nety.ys.constraint.api.ConstraintAPI;
 import nety.ys.constraint.api.ConstraintType;
+import nety.ys.util.DebugLogger;
 
 /**
  * 约束管理器
@@ -32,11 +33,11 @@ public class ConstraintManager {
             
             // 监听约束事件
             nety.ys.constraint.api.ConstraintEvent.CONSTRAINT_APPLIED.register((player, constraintType, context) -> {
-                TokenAuthMod.LOGGER.debug("玩家 {} 被应用约束: {}", player.getName().getString(), constraintType);
+                DebugLogger.debug("玩家 {} 被应用约束: {}", player.getName().getString(), constraintType);
             });
-            
+
             nety.ys.constraint.api.ConstraintEvent.CONSTRAINT_REMOVED.register((player, constraintType, context) -> {
-                TokenAuthMod.LOGGER.debug("玩家 {} 的约束 {} 已移除", player.getName().getString(), constraintType);
+                DebugLogger.debug("玩家 {} 的约束 {} 已移除", player.getName().getString(), constraintType);
             });
             
             TokenAuthMod.LOGGER.info("约束系统初始化完成");
@@ -56,7 +57,7 @@ public class ConstraintManager {
             return;
         }
         
-        TokenAuthMod.LOGGER.info("为未认证玩家 {} 添加约束", player.getName().getString());
+        DebugLogger.debug("为未认证玩家 {} 添加约束", player.getName().getString());
         
         try {
             // 添加各种约束类型
@@ -71,7 +72,7 @@ public class ConstraintManager {
             addConstraint(player, ConstraintType.ITEM_DROPPING);
             addConstraint(player, ConstraintType.ITEM_MOVING);
             
-            TokenAuthMod.LOGGER.info("已为玩家 {} 添加所有约束", player.getName().getString());
+            DebugLogger.debug("已为玩家 {} 添加所有约束", player.getName().getString());
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("为玩家添加约束时出错", e);
         }
@@ -88,7 +89,7 @@ public class ConstraintManager {
             return;
         }
         
-        TokenAuthMod.LOGGER.info("为已认证玩家 {} 移除约束", player.getName().getString());
+        DebugLogger.debug("为已认证玩家 {} 移除约束", player.getName().getString());
         
         try {
             // 移除各种约束类型
@@ -103,7 +104,7 @@ public class ConstraintManager {
             removeConstraint(player, ConstraintType.ITEM_DROPPING);
             removeConstraint(player, ConstraintType.ITEM_MOVING);
             
-            TokenAuthMod.LOGGER.info("已为玩家 {} 移除所有约束", player.getName().getString());
+            DebugLogger.debug("已为玩家 {} 移除所有约束", player.getName().getString());
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("为玩家移除约束时出错", e);
         }
@@ -118,7 +119,7 @@ public class ConstraintManager {
     private static void addConstraint(ServerPlayerEntity player, ConstraintType constraintType) {
         try {
             ConstraintAPI.addConstraint(player, constraintType, CONSTRAINT_SOURCE, new nety.ys.constraint.api.ConstraintContext());
-            TokenAuthMod.LOGGER.debug("已为玩家 {} 添加约束: {}", player.getName().getString(), constraintType);
+            DebugLogger.debug("已为玩家 {} 添加约束: {}", player.getName().getString(), constraintType);
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("添加约束 {} 时出错", constraintType, e);
         }
@@ -133,7 +134,7 @@ public class ConstraintManager {
     private static void removeConstraint(ServerPlayerEntity player, ConstraintType constraintType) {
         try {
             ConstraintAPI.removeConstraint(player, constraintType, CONSTRAINT_SOURCE);
-            TokenAuthMod.LOGGER.debug("已为玩家 {} 移除约束: {}", player.getName().getString(), constraintType);
+            DebugLogger.debug("已为玩家 {} 移除约束: {}", player.getName().getString(), constraintType);
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("移除约束 {} 时出错", constraintType, e);
         }

@@ -3,6 +3,7 @@ package nety.ys.server;
 import nety.ys.TokenAuthMod;
 import nety.ys.config.ModConfig;
 import nety.ys.crypto.DynamicTokenGenerator;
+import nety.ys.util.DebugLogger;
 
 import java.net.InetAddress;
 import java.util.*;
@@ -154,11 +155,11 @@ public class AuthSessionManager {
         
         // 设置会话超时
         long timeout = TokenAuthMod.getInstance().getConfigManager().getServerConfig().responseTimeout;
-        TokenAuthMod.LOGGER.info("设置会话 {} 超时时间: {} 毫秒", connectionId, timeout);
+        DebugLogger.debug("设置会话 {} 超时时间: {} 毫秒", connectionId, timeout);
         scheduler.schedule(() -> {
             AuthSession expiredSession = activeSessions.remove(connectionId);
             if (expiredSession != null) {
-                TokenAuthMod.LOGGER.info("会话 {} 已超时，创建时间: {}, 当前时间: {}",
+                DebugLogger.debug("会话 {} 已超时，创建时间: {}, 当前时间: {}",
                     connectionId, expiredSession.getTimestamp(), System.currentTimeMillis());
             }
         }, timeout, TimeUnit.MILLISECONDS);
@@ -189,10 +190,10 @@ public class AuthSessionManager {
             TokenAuthMod.LOGGER.warn("未找到连接ID {} 的会话，尝试通过其他方式查找", connectionId);
             
             // 如果直接查找失败，打印所有活跃会话用于调试
-            TokenAuthMod.LOGGER.info("当前活跃会话数量: {}", activeSessions.size());
+            DebugLogger.debug("当前活跃会话数量: {}", activeSessions.size());
             for (Map.Entry<String, AuthSession> entry : activeSessions.entrySet()) {
                 AuthSession s = entry.getValue();
-                TokenAuthMod.LOGGER.info("会话 - ID: {}, IP: {}, 时间戳: {}",
+                DebugLogger.debug("会话 - ID: {}, IP: {}, 时间戳: {}",
                     entry.getKey(), s.getAddress().toString(), s.getTimestamp());
             }
             
@@ -317,8 +318,8 @@ public class AuthSessionManager {
         long currentTime = System.currentTimeMillis();
         long timeout = TokenAuthMod.getInstance().getConfigManager().getServerConfig().responseTimeout;
         
-        TokenAuthMod.LOGGER.debug("开始清理过期会话，当前时间: {}, 超时时间: {} 毫秒", currentTime, timeout);
-        TokenAuthMod.LOGGER.debug("当前活跃会话数量: {}", activeSessions.size());
+        DebugLogger.debug("开始清理过期会话，当前时间: {}, 超时时间: {} 毫秒", currentTime, timeout);
+        DebugLogger.debug("当前活跃会话数量: {}", activeSessions.size());
         
         Iterator<Map.Entry<String, AuthSession>> iterator = activeSessions.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -326,17 +327,17 @@ public class AuthSessionManager {
             AuthSession session = entry.getValue();
             long sessionAge = currentTime - session.getTimestamp();
             
-            TokenAuthMod.LOGGER.debug("检查会话: {}, 创建时间: {}, 年龄: {} 毫秒",
+            DebugLogger.debug("检查会话: {}, 创建时间: {}, 年龄: {} 毫秒",
                 entry.getKey(), session.getTimestamp(), sessionAge);
             
             if (sessionAge > timeout) {
                 iterator.remove();
-                TokenAuthMod.LOGGER.info("清理过期会话: {}, 年龄: {} 毫秒 (超时: {} 毫秒)",
+                DebugLogger.debug("清理过期会话: {}, 年龄: {} 毫秒 (超时: {} 毫秒)",
                     entry.getKey(), sessionAge, timeout);
             }
         }
         
-        TokenAuthMod.LOGGER.debug("会话清理完成，剩余活跃会话数量: {}", activeSessions.size());
+        DebugLogger.debug("会话清理完成，剩余活跃会话数量: {}", activeSessions.size());
     }
     
     /**
@@ -352,7 +353,7 @@ public class AuthSessionManager {
             
             if (currentTime > unblockTime) {
                 iterator.remove();
-                TokenAuthMod.LOGGER.debug("移除过期的IP阻止: {}", entry.getKey());
+                DebugLogger.debug("移除过期的IP阻止: {}", entry.getKey());
             }
         }
     }

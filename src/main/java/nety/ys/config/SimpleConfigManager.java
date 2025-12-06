@@ -1,6 +1,7 @@
 package nety.ys.config;
 
 import nety.ys.TokenAuthMod;
+import nety.ys.util.DebugLogger;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -59,7 +60,7 @@ public class SimpleConfigManager {
             } catch (Exception e) {
                 // 如果获取失败，使用源码目录中的资源目录作为后备
                 configDir = Path.of("src/main/resources/config");
-                TokenAuthMod.LOGGER.warn("无法获取运行时配置目录，使用源码资源目录作为后备: {}", e.getMessage());
+                DebugLogger.debug("无法获取运行时配置目录，使用源码资源目录作为后备: {}", e.getMessage());
             }
             
             Path configPath = configDir.resolve("token-auth-server.properties");
@@ -72,9 +73,9 @@ public class SimpleConfigManager {
                 try (InputStream input = Files.newInputStream(configPath)) {
                     props.load(input);
                 }
-                TokenAuthMod.LOGGER.info("服务器配置加载成功: {}", configPath);
+                DebugLogger.debug("服务器配置加载成功: {}", configPath);
             } else {
-                TokenAuthMod.LOGGER.info("服务器配置文件不存在，创建默认配置");
+                DebugLogger.debug("服务器配置文件不存在，创建默认配置");
             }
             
             // 从属性文件读取服务器配置
@@ -82,7 +83,7 @@ public class SimpleConfigManager {
             
             // 如果配置文件不存在或为空，创建默认配置并保存
             if (!configPath.toFile().exists() || props.isEmpty()) {
-                TokenAuthMod.LOGGER.info("服务器配置文件不存在或为空，创建默认配置");
+                DebugLogger.debug("服务器配置文件不存在或为空，创建默认配置");
                 serverConfig = new ModConfig.ServerConfig();
                 saveServerConfig();
             }
@@ -108,7 +109,7 @@ public class SimpleConfigManager {
             } catch (Exception e) {
                 // 如果获取失败，使用源码目录中的资源目录作为后备
                 configDir = Path.of("src/main/resources/config");
-                TokenAuthMod.LOGGER.warn("无法获取运行时配置目录，使用源码资源目录作为后备: {}", e.getMessage());
+                DebugLogger.debug("无法获取运行时配置目录，使用源码资源目录作为后备: {}", e.getMessage());
             }
             
             Path configPath = configDir.resolve("token-auth-client.properties");
@@ -121,9 +122,9 @@ public class SimpleConfigManager {
                 try (InputStream input = Files.newInputStream(configPath)) {
                     props.load(input);
                 }
-                TokenAuthMod.LOGGER.info("客户端配置加载成功: {}", configPath);
+                DebugLogger.debug("客户端配置加载成功: {}", configPath);
             } else {
-                TokenAuthMod.LOGGER.info("客户端配置文件不存在，创建默认配置");
+                DebugLogger.debug("客户端配置文件不存在，创建默认配置");
             }
             
             // 从属性文件读取客户端配置
@@ -131,7 +132,7 @@ public class SimpleConfigManager {
             
             // 如果配置文件不存在或为空，创建默认配置并保存
             if (!configPath.toFile().exists() || props.isEmpty()) {
-                TokenAuthMod.LOGGER.info("客户端配置文件不存在或为空，创建默认配置");
+                DebugLogger.debug("客户端配置文件不存在或为空，创建默认配置");
                 clientConfig = new ModConfig.ClientConfig();
                 saveClientConfig();
             }
@@ -160,7 +161,7 @@ public class SimpleConfigManager {
                 props.store(output, "Token Auth Mod Server Configuration");
             }
             
-            TokenAuthMod.LOGGER.info("服务器配置已保存");
+            DebugLogger.debug("服务器配置已保存");
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("保存服务器配置失败", e);
         }
@@ -185,7 +186,7 @@ public class SimpleConfigManager {
                 props.store(output, "Token Auth Mod Client Configuration");
             }
             
-            TokenAuthMod.LOGGER.info("客户端配置已保存");
+            DebugLogger.debug("客户端配置已保存");
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("保存客户端配置失败", e);
         }
@@ -196,7 +197,7 @@ public class SimpleConfigManager {
      */
     public void reloadServerConfig() {
         loadServerConfig();
-        TokenAuthMod.LOGGER.info("服务器配置已重新加载");
+        DebugLogger.debug("服务器配置已重新加载");
     }
     
     /**
@@ -204,7 +205,7 @@ public class SimpleConfigManager {
      */
     public void reloadClientConfig() {
         loadClientConfig();
-        TokenAuthMod.LOGGER.info("客户端配置已重新加载");
+        DebugLogger.debug("客户端配置已重新加载");
     }
     
     /**
@@ -233,6 +234,7 @@ public class SimpleConfigManager {
         serverConfig.enableAuthLogging = Boolean.parseBoolean(props.getProperty("logging.enableAuthLogging", "true"));
         serverConfig.logSuccessfulAuth = Boolean.parseBoolean(props.getProperty("logging.logSuccessfulAuth", "true"));
         serverConfig.logFailedAttempts = Boolean.parseBoolean(props.getProperty("logging.logFailedAttempts", "true"));
+        serverConfig.debugMode = Boolean.parseBoolean(props.getProperty("logging.debugMode", "false"));
         
         // CSV记录设置
         serverConfig.enableCSVLogging = Boolean.parseBoolean(props.getProperty("enableCSVLogging", "false"));
@@ -307,6 +309,7 @@ public class SimpleConfigManager {
         props.setProperty("logging.enableAuthLogging", String.valueOf(serverConfig.enableAuthLogging));
         props.setProperty("logging.logSuccessfulAuth", String.valueOf(serverConfig.logSuccessfulAuth));
         props.setProperty("logging.logFailedAttempts", String.valueOf(serverConfig.logFailedAttempts));
+        props.setProperty("logging.debugMode", String.valueOf(serverConfig.debugMode));
         
         // CSV记录设置
         props.setProperty("enableCSVLogging", String.valueOf(serverConfig.enableCSVLogging));

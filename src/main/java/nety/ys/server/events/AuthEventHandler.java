@@ -11,6 +11,7 @@ import nety.ys.server.constraint.ConstraintManager;
 import nety.ys.util.FailedAuthLogger;
 import nety.ys.server.AuthAlertService;
 import nety.ys.config.SimpleConfigManager;
+import nety.ys.util.DebugLogger;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -46,9 +47,9 @@ public class AuthEventHandler {
                 // 检查约束系统是否可用
                 Class.forName("nety.ys.constraint.api.ConstraintAPI");
                 ConstraintManager.applyConstraintsToPlayer(player);
-                TokenAuthMod.LOGGER.info("已为未认证玩家 {} 添加约束", player.getName().getString());
+                DebugLogger.debug("已为未认证玩家 {} 添加约束", player.getName().getString());
             } catch (ClassNotFoundException e) {
-                TokenAuthMod.LOGGER.debug("约束系统不可用，跳过约束添加");
+                DebugLogger.debug("约束系统不可用，跳过约束添加");
             } catch (Exception e) {
                 TokenAuthMod.LOGGER.error("为玩家添加约束时出错", e);
             }
@@ -60,7 +61,7 @@ public class AuthEventHandler {
                 // 断开连接
                 player.networkHandler.disconnect(net.minecraft.text.Text.literal("认证系统错误，请稍后再试"));
             } else {
-                TokenAuthMod.LOGGER.info("已向玩家 {} 发送认证挑战，等待响应", player.getName().getString());
+                DebugLogger.auth("已向玩家 {} 发送认证挑战，等待响应", player.getName().getString());
                 // 给予玩家一定时间完成认证，否则断开连接
                 scheduleAuthenticationTimeout(player, server);
             }
@@ -78,7 +79,7 @@ public class AuthEventHandler {
         SimpleConfigManager configManager = (SimpleConfigManager) nety.ys.TokenAuthMod.getInstance().getConfigManager();
         nety.ys.config.ModConfig.ServerConfig config = configManager.getServerConfig();
         
-        TokenAuthMod.LOGGER.info("安排玩家 {} 的认证超时检查，超时时间: {} 毫秒",
+        DebugLogger.auth("安排玩家 {} 的认证超时检查，超时时间: {} 毫秒",
             player.getName().getString(), config.responseTimeout);
         
         // 使用调度器而不是阻塞服务器主线程
@@ -113,7 +114,7 @@ public class AuthEventHandler {
                         
                         player.networkHandler.disconnect(net.minecraft.text.Text.literal("认证超时，请使用支持令牌认证的客户端"));
                     } else {
-                        TokenAuthMod.LOGGER.info("玩家 {} 已通过认证或已断开连接，取消超时检查", player.getName().getString());
+                        DebugLogger.auth("玩家 {} 已通过认证或已断开连接，取消超时检查", player.getName().getString());
                     }
                 } catch (Exception e) {
                     TokenAuthMod.LOGGER.error("检查认证超时时出错", e);
@@ -134,7 +135,7 @@ public class AuthEventHandler {
     public static void onPlayerDisconnect(ServerPlayNetworkHandler handler, MinecraftServer server) {
         ServerPlayerEntity player = handler.player;
         
-        TokenAuthMod.LOGGER.info("玩家 {} 已断开连接", player.getName().getString());
+        DebugLogger.debug("玩家 {} 已断开连接", player.getName().getString());
         
         // 清理玩家的认证状态
         AuthSessionManager.removePlayerAuthentication(player.getUuid().toString());
