@@ -44,6 +44,16 @@ public class ModConfig {
         public boolean enableCSVLogging = false; // 默认关闭，需要用户手动启用
         public String csvFileName = "failed_auth_attempts.csv";
         public boolean logTimeoutAttempts = true; // 是否记录认证超时
+        
+        // 邮件警报设置
+        public boolean enableEmailAlerts = false; // 是否启用邮件警报
+        public String serverName = "Minecraft服务器"; // 服务器名称
+        public String smtpHost = ""; // SMTP服务器地址
+        public String smtpPort = "587"; // SMTP端口
+        public String smtpUsername = ""; // SMTP用户名
+        public String smtpPassword = ""; // SMTP密码
+        public String emailFromAddress = ""; // 发件人邮箱
+        public String emailToAddress = ""; // 收件人邮箱
         public boolean includeGeoLocation = true; // 是否包含地理位置信息
         
         /**

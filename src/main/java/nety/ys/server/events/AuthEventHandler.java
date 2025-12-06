@@ -9,6 +9,7 @@ import nety.ys.TokenAuthMod;
 import nety.ys.server.AuthSessionManager;
 import nety.ys.server.constraint.ConstraintManager;
 import nety.ys.util.FailedAuthLogger;
+import nety.ys.server.AuthAlertService;
 import nety.ys.config.SimpleConfigManager;
 
 import java.net.InetAddress;
@@ -90,16 +91,24 @@ public class AuthEventHandler {
                     if (!AuthSessionManager.isPlayerAuthenticated(player.getUuid().toString()) && player.networkHandler != null) {
                         TokenAuthMod.LOGGER.warn("玩家 {} 认证超时，断开连接", player.getName().getString());
                         
+                        // 获取玩家IP地址
+                        InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
+                        
                         // 检查是否需要记录认证超时到CSV文件
                         if (config.logTimeoutAttempts) {
                             // 记录认证超时到CSV文件
                             try {
-                                // 获取玩家IP地址
-                                InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
                                 FailedAuthLogger.logFailedAuth(player.getName().getString(), playerAddress, "认证超时");
                             } catch (Exception e) {
                                 TokenAuthMod.LOGGER.error("记录认证超时到CSV时出错", e);
                             }
+                        }
+                        
+                        // 发送认证超时警报邮件
+                        try {
+                            AuthAlertService.sendAuthTimeoutAlert(player.getName().getString(), playerAddress);
+                        } catch (Exception e) {
+                            TokenAuthMod.LOGGER.error("发送认证超时警报邮件时出错", e);
                         }
                         
                         player.networkHandler.disconnect(net.minecraft.text.Text.literal("认证超时，请使用支持令牌认证的客户端"));

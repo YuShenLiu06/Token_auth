@@ -39,4 +39,22 @@ enableCSVLogging = true
 logTimeoutAttempts = true
 csvFileName = "failed_auth_attempts.csv"
 # 是否包含地理位置信息（需要网络请求）
+
+[email]
+# 是否启用邮件警报功能
+enableEmailAlerts = false
+# 服务器名称
+serverName = "Minecraft服务器"
+# SMTP服务器地址
+smtpHost = ""
+# SMTP端口
+smtpPort = "587"
+# SMTP用户名
+smtpUsername = ""
+# SMTP密码
+smtpPassword = ""
+# 发件人邮箱
+fromAddress = ""
+# 收件人邮箱
+toAddress = ""
 includeGeoLocation = true

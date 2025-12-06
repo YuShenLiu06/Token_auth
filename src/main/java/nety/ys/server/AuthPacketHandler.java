@@ -9,6 +9,7 @@ import nety.ys.network.packets.TokenResponsePacket;
 import nety.ys.server.constraint.ConstraintManager;
 import nety.ys.util.FailedAuthLogger;
 import nety.ys.config.SimpleConfigManager;
+import nety.ys.server.AuthAlertService;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -191,6 +192,9 @@ public class AuthPacketHandler {
         InetAddress playerAddress = ((InetSocketAddress) player.networkHandler.connection.getAddress()).getAddress();
         
         // 记录到CSV文件
+        
+        // 发送认证失败警报邮件
+        AuthAlertService.sendAuthFailureAlert(player.getName().getString(), playerAddress, reason);
         FailedAuthLogger.logFailedAuth(player.getName().getString(), playerAddress, reason);
         
         // 增加失败尝试次数

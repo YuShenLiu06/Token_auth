@@ -37,6 +37,9 @@ dependencies {
 	
 	// Gson for JSON parsing
 	include(implementation('com.google.code.gson:gson:2.10.1'))
+	
+	// JavaMail API for email functionality
+	include(implementation('com.sun.mail:javax.mail:1.6.2'))
 }
 
 processResources {

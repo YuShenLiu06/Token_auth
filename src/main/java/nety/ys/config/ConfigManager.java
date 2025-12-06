@@ -227,6 +227,16 @@ public class ConfigManager {
         serverConfig.logTimeoutAttempts = Boolean.parseBoolean(props.getProperty("logTimeoutAttempts", "true"));
         serverConfig.includeGeoLocation = Boolean.parseBoolean(props.getProperty("includeGeoLocation", "true"));
         
+        // 邮件警报设置
+        serverConfig.enableEmailAlerts = Boolean.parseBoolean(props.getProperty("email.enableEmailAlerts", "false"));
+        serverConfig.serverName = props.getProperty("email.serverName", "Minecraft服务器");
+        serverConfig.smtpHost = props.getProperty("email.smtpHost", "");
+        serverConfig.smtpPort = props.getProperty("email.smtpPort", "587");
+        serverConfig.smtpUsername = props.getProperty("email.smtpUsername", "");
+        serverConfig.smtpPassword = props.getProperty("email.smtpPassword", "");
+        serverConfig.emailFromAddress = props.getProperty("email.fromAddress", "");
+        serverConfig.emailToAddress = props.getProperty("email.toAddress", "");
+        
         return serverConfig;
     }
     
@@ -270,6 +280,16 @@ public class ConfigManager {
         props.setProperty("security.enableIPWhitelist", String.valueOf(serverConfig.enableIPWhitelist));
         // IP白名单暂时不保存
         
+        
+        // 邮件警报设置
+        props.setProperty("email.enableEmailAlerts", String.valueOf(serverConfig.enableEmailAlerts));
+        props.setProperty("email.serverName", serverConfig.serverName);
+        props.setProperty("email.smtpHost", serverConfig.smtpHost);
+        props.setProperty("email.smtpPort", serverConfig.smtpPort);
+        props.setProperty("email.smtpUsername", serverConfig.smtpUsername);
+        props.setProperty("email.smtpPassword", serverConfig.smtpPassword);
+        props.setProperty("email.fromAddress", serverConfig.emailFromAddress);
+        props.setProperty("email.toAddress", serverConfig.emailToAddress);
         // 日志设置
         props.setProperty("logging.enableAuthLogging", String.valueOf(serverConfig.enableAuthLogging));
         props.setProperty("logging.logSuccessfulAuth", String.valueOf(serverConfig.logSuccessfulAuth));
