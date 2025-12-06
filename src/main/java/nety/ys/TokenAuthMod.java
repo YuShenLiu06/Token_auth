@@ -90,18 +90,6 @@ public class TokenAuthMod implements ModInitializer {
         // 初始化认证会话管理器
         AuthSessionManager.initialize();
         
-        // 初始化约束系统（仅在服务端）
-        try {
-            // 检查constraint模组是否可用
-            Class.forName("nety.ys.constraint.api.ConstraintAPI");
-            ConstraintManager.initialize();
-            TokenAuthMod.LOGGER.info("约束系统初始化成功");
-        } catch (ClassNotFoundException e) {
-            TokenAuthMod.LOGGER.warn("约束模组未找到，约束功能将不可用");
-        } catch (Exception e) {
-            TokenAuthMod.LOGGER.error("初始化约束系统时出错", e);
-        }
-        
         // 注册服务端数据包
         PacketRegistry.registerServerPackets();
         
@@ -113,7 +101,35 @@ public class TokenAuthMod implements ModInitializer {
             TokenCommand.register(dispatcher);
         });
         
+        // 延迟初始化约束系统，确保ConstraintAPI已经完全初始化
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            initializeConstraintSystem();
+        });
+        
         LOGGER.info("服务端认证系统初始化完成");
+    }
+    
+    /**
+     * 延迟初始化约束系统
+     * 确保在服务器启动时ConstraintAPI已经完全初始化
+     */
+    private void initializeConstraintSystem() {
+        try {
+            // 检查constraint模组是否可用
+            Class.forName("nety.ys.constraint.api.ConstraintAPI");
+            
+            // 检查ConstraintAPI是否已经初始化
+            if (nety.ys.constraint.api.ConstraintAPI.isInitialized()) {
+                ConstraintManager.initialize();
+                TokenAuthMod.LOGGER.info("约束系统初始化成功");
+            } else {
+                TokenAuthMod.LOGGER.warn("ConstraintAPI尚未初始化，约束功能将不可用");
+            }
+        } catch (ClassNotFoundException e) {
+            TokenAuthMod.LOGGER.warn("约束模组未找到，约束功能将不可用");
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("初始化约束系统时出错", e);
+        }
     }
     
     /**

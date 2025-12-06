@@ -94,36 +94,9 @@ public class ServerLoginNetworkHandlerMixin {
                 return;
             }
             
-            // 发送挑战给客户端
-            // 在登录阶段直接发送挑战，不允许未认证用户进入游戏
-            boolean challengeSent = false;
-            try {
-                // 创建挑战数据包
-                nety.ys.network.packets.ChallengePacket challengePacket = new nety.ys.network.packets.ChallengePacket(
-                    session.getChallenge(),
-                    session.getTimestamp()
-                );
-                
-                // 发送挑战给客户端
-                // 使用自定义方法在登录阶段发送数据包
-                sendChallengeDuringLogin((ServerLoginNetworkHandler)(Object)this, challengePacket);
-                challengeSent = true;
-                
-                TokenAuthMod.LOGGER.info("已在登录阶段发送认证挑战，等待客户端响应");
-            } catch (Exception e) {
-                TokenAuthMod.LOGGER.error("创建或发送挑战数据包时出错", e);
-            }
-            
-            if (!challengeSent) {
-                ((ServerLoginNetworkHandler)(Object)this).getConnection().disconnect(
-                    Text.literal("发送认证挑战失败，请稍后再试")
-                );
-                ci.cancel();
-                return;
-            }
-            
-            // 阻止玩家进入游戏，直到认证完成
-            ci.cancel();
+            // 不在登录阶段发送挑战，而是让玩家进入游戏后在游戏阶段进行认证
+            // 这样可以避免登录阶段的数据包序列化问题
+            TokenAuthMod.LOGGER.info("允许玩家进入游戏，将在游戏阶段进行认证");
             
             // 不取消原版流程，让玩家正常进入游戏，然后在游戏阶段进行认证
             // ci.cancel();
@@ -178,36 +151,6 @@ public class ServerLoginNetworkHandlerMixin {
                 Text.literal("认证系统错误: " + e.getMessage())
             );
             ci.cancel();
-        }
-    }
-    
-    /**
-     * 在登录阶段发送挑战数据包
-     *
-     * @param handler 登录网络处理器
-     * @param challengePacket 挑战数据包
-     */
-    private static void sendChallengeDuringLogin(ServerLoginNetworkHandler handler, nety.ys.network.packets.ChallengePacket challengePacket) {
-        try {
-            // 使用反射获取连接对象
-            java.lang.reflect.Field connectionField = ServerLoginNetworkHandler.class.getDeclaredField("connection");
-            connectionField.setAccessible(true);
-            Object connection = connectionField.get(handler);
-            
-            // 获取连接的网络管理器
-            java.lang.reflect.Field networkManagerField = connection.getClass().getDeclaredField("networkManager");
-            networkManagerField.setAccessible(true);
-            Object networkManager = networkManagerField.get(connection);
-            
-            // 发送数据包
-            java.lang.reflect.Method sendPacketMethod = networkManager.getClass().getDeclaredMethod("sendPacket",
-                Class.forName("net.minecraft.network.packet.Packet"));
-            sendPacketMethod.setAccessible(true);
-            sendPacketMethod.invoke(networkManager, challengePacket.toPacket());
-            
-            TokenAuthMod.LOGGER.debug("已在登录阶段发送挑战数据包");
-        } catch (Exception e) {
-            TokenAuthMod.LOGGER.error("在登录阶段发送挑战数据包时出错", e);
         }
     }
 }
