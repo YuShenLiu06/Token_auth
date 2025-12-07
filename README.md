@@ -22,6 +22,9 @@
 - **防暴力破解**：IP阻止和失败次数限制
 - **会话超时**：自动清理过期会话
 - **日志审计**：详细的认证事件日志记录
+- **邮件警报**：认证失败时自动发送邮件通知
+- **IP地理位置追踪**：自动记录认证失败者的地理位置信息
+- **CSV日志记录**：将认证失败记录保存到CSV文件
 
 ## 📋 系统要求
 
@@ -68,6 +71,33 @@ max_attempts_per_ip = 5
 
 # IP阻止持续时间（分钟）
 block_duration_minutes = 10
+
+[csv_logging]
+# 是否启用CSV记录功能
+enableCSVLogging = false
+# CSV文件名
+csvFileName = "failed_auth_attempts.csv"
+# 是否包含地理位置信息
+includeGeoLocation = true
+# 是否记录认证超时
+logTimeoutAttempts = true
+
+[email_alerts]
+# 是否启用邮件警报
+enableEmailAlerts = false
+# SMTP服务器配置
+smtpHost = ""
+smtpPort = 587
+enableSSL = true
+smtpUsername = ""
+smtpPassword = ""
+emailFromAddress = ""
+emailToAddress = ""
+serverName = "Minecraft服务器"
+
+[logging]
+# 是否启用调试模式
+debugMode = false
 ```
 
 ### 客户端配置文件位置
@@ -78,33 +108,56 @@ config/token-auth/token-auth-client.properties
 ## 🔧 使用方法
 
 ### 管理员命令
-Token Auth Mod 提供了丰富的管理命令，用于配置和监控系统状态。
+Token Auth Mod 提供了统一的命令系统，所有命令都使用 `/token` 前缀。
 
-**主要命令**:
+**基本命令**:
 ```
+/token - 显示命令帮助
 /token reload - 重新加载配置
 /token generate-key - 生成新的共享密钥
 /token status - 查看系统状态
-/token block-ip <IP> [分钟] - 阻止IP地址
-/token unblock-ip <IP> - 解除IP阻止
-/token list-blocked-ips - 列出被阻止的IP
-/token list-authenticated - 列出已认证玩家
-/token remove-auth <玩家> - 移除玩家认证状态
 ```
 
-**CSV记录命令**:
+**配置命令**:
 ```
-/csvtest - 测试CSV记录功能
-/csvstatus - 查看CSV记录状态
-/csvenable - 启用CSV记录
-/csvdisable - 禁用CSV记录
-/csvtimeout - 切换超时记录
+/token config <配置项> <值> - 设置配置项
 ```
+可用配置项：
+- `enabled` - 启用/禁用认证系统
+- `maxAttemptsPerIP` - 设置最大尝试次数/IP
+- `blockDurationMinutes` - 设置IP阻止持续时间
+- `enableAuthLogging` - 启用/禁用认证日志
+- `enableCSVLogging` - 启用/禁用CSV记录
+- `includeGeoLocation` - 启用/禁用地理位置记录
+- `logTimeoutAttempts` - 启用/禁用超时尝试记录
+- `enableEmailAlerts` - 启用/禁用邮件警报
+- `smtpHost` - 设置SMTP服务器
+- `smtpPort` - 设置SMTP端口
+- `enableSSL` - 启用/禁用SSL连接
+- `smtpUsername` - 设置SMTP用户名
+- `smtpPassword` - 设置SMTP密码
+- `emailFromAddress` - 设置发件人邮箱
+- `emailToAddress` - 设置收件人邮箱
+- `serverName` - 设置服务器名称
 
 **调试命令**:
 ```
-/debugtest - 测试调试日志功能
-/debugstatus - 查看调试模式状态
+/token debug email - 测试邮件发送功能
+/token debug csv - 测试CSV记录功能
+/token debug auth - 测试认证系统
+```
+
+**IP管理命令**:
+```
+/token block-ip <IP> [分钟] - 阻止IP地址
+/token unblock-ip <IP> - 解除IP阻止
+/token list-blocked-ips - 列出被阻止的IP
+```
+
+**玩家管理命令**:
+```
+/token list-authenticated - 列出已认证玩家
+/token remove-auth <玩家> - 移除玩家认证状态
 ```
 
 📖 **完整命令参考**: 详细的命令说明和使用示例请参考 [命令参考指南](Docs/COMMAND_REFERENCE.md)
@@ -126,6 +179,61 @@ Token Auth Mod 提供了丰富的管理命令，用于配置和监控系统状�
 
 认证成功后所有约束自动移除。
 
+### CSV日志记录功能（v1.1.5新增）
+当启用CSV记录功能时，系统会自动将认证失败事件记录到CSV文件中：
+
+**功能特点**：
+- 自动记录玩家名称、登录时间、IP地址和地理位置信息
+- 线程安全的文件写入，支持多服务器环境
+- 可配置是否包含地理位置信息
+- 支持记录认证超时事件
+
+**CSV文件格式**：
+```
+玩家名称,登录时间,IP地址,地理位置
+TestPlayer,23/12/06 19:30:45,192.168.1.1,中国 广东省 深圳市
+AnotherPlayer,23/12/06 20:15:22,8.8.8.8,美国 加利福尼亚州 山景城
+```
+
+**管理命令**：
+- `/token config enableCSVLogging true/false` - 启用/禁用CSV记录
+- `/token config includeGeoLocation true/false` - 启用/禁用地理位置记录
+- `/token config logTimeoutAttempts true/false` - 启用/禁用超时记录
+- `/token debug csv` - 测试CSV记录功能
+
+### 邮件警报功能（v1.1.5新增）
+当启用邮件警报功能时，系统会在认证失败或超时时自动发送邮件通知：
+
+**功能特点**：
+- 支持SMTP协议，包括SSL加密
+- 异步发送，不影响服务器性能
+- 包含详细的认证失败信息和地理位置
+- 支持HTML格式的美观邮件模板
+
+**邮件内容包括**：
+- 服务器名称和事件时间
+- 尝试登录的玩家名称
+- 玩家IP地址和地理位置信息
+- 认证失败的具体原因
+
+**配置示例**：
+```toml
+[email_alerts]
+enableEmailAlerts = true
+smtpHost = "smtp.gmail.com"
+smtpPort = "587"
+enableSSL = true
+smtpUsername = "your-email@gmail.com"
+smtpPassword = "your-app-password"
+emailFromAddress = "server-alerts@gmail.com"
+emailToAddress = "admin@example.com"
+serverName = "我的Minecraft服务器"
+```
+
+**管理命令**：
+- `/token config enableEmailAlerts true/false` - 启用/禁用邮件警报
+- `/token debug email` - 测试邮件发送功能
+
 ## 🏗️ 开发信息
 
 ### 项目结构
@@ -135,21 +243,50 @@ src/main/java/nety/ys/
 ├── client/                       # 客户端相关代码
 │   ├── ClientInitializer.java
 │   ├── ClientPacketHandler.java
-│   └── ClientTokenManager.java
+│   ├── ClientTokenManager.java
+│   ├── AuthStateManager.java
+│   └── mixin/                   # 客户端Mixin
+│       └── AuthResultPacketMixin.java
 ├── server/                       # 服务端相关代码
 │   ├── AuthSessionManager.java
 │   ├── AuthPacketHandler.java
+│   ├── AuthSessionHelper.java
+│   ├── AuthAlertService.java      # 邮件警报服务
 │   ├── commands/
+│   │   ├── TokenCommandUnified.java # 统一命令系统
+│   │   └── DebugLoggerTestCommand.java
 │   ├── events/
+│   │   └── AuthEventHandler.java
 │   └── constraint/               # 约束系统
 │       ├── ConstraintManager.java
 │       └── AuthenticationConstraintCondition.java
 ├── network/                      # 网络通信
 │   ├── PacketRegistry.java
 │   └── packets/
+│       ├── AuthResultPacket.java
+│       ├── ChallengePacket.java
+│       └── TokenResponsePacket.java
 ├── config/                       # 配置管理
+│   ├── ModConfig.java
+│   ├── ConfigManager.java
+│   ├── SimpleConfigManager.java
+│   └── KeyGenerator.java
 ├── crypto/                       # 加密算法
+│   └── DynamicTokenGenerator.java
+├── mixin/                        # 服务端Mixin
+│   ├── ServerLoginNetworkHandlerMixin.java
+│   ├── ServerPlayerEntityMixin.java
+│   └── ClientLoginNetworkHandlerMixin.java
 └── util/                         # 工具类
+    ├── CryptoUtil.java
+    ├── NetworkUtil.java
+    ├── FailedAuthLogger.java      # CSV日志记录
+    ├── EmailNotifier.java         # 邮件通知
+    ├── IPGeolocationUtil.java    # IP地理位置
+    ├── DebugLogger.java          # 调试日志系统
+    ├── CSVLoggingTest.java
+    ├── EmailAlertTest.java
+    └── DebugLoggerTest.java
 ```
 
 ### 核心组件
@@ -162,6 +299,31 @@ src/main/java/nety/ys/
 
 #### 网络数据包系统
 处理客户端和服务端之间的认证数据传输。
+
+#### 邮件警报服务
+- **文件**: [`AuthAlertService.java`](src/main/java/nety/ys/server/AuthAlertService.java)
+- **功能**: 在认证失败或超时时自动发送邮件通知
+- **特性**: 支持异步发送、HTML格式、地理位置信息
+
+#### CSV日志记录器
+- **文件**: [`FailedAuthLogger.java`](src/main/java/nety/ys/util/FailedAuthLogger.java)
+- **功能**: 将认证失败记录保存到CSV文件
+- **特性**: 线程安全写入、自动文件管理、地理位置记录
+
+#### IP地理位置工具
+- **文件**: [`IPGeolocationUtil.java`](src/main/java/nety/ys/util/IPGeolocationUtil.java)
+- **功能**: 获取IP地址的地理位置信息
+- **特性**: 支持重试机制、详细地理信息、错误处理
+
+#### 调试日志系统
+- **文件**: [`DebugLogger.java`](src/main/java/nety/ys/util/DebugLogger.java)
+- **功能**: 提供分类的调试日志输出
+- **特性**: 多种日志类型、可配置开关、详细调试信息
+
+#### 统一命令系统
+- **文件**: [`TokenCommandUnified.java`](src/main/java/nety/ys/server/commands/TokenCommandUnified.java)
+- **功能**: 整合所有管理命令到统一接口
+- **特性**: 统一命令格式、完整帮助信息、配置管理
 
 ## 🐛 故障排除
 
@@ -203,6 +365,7 @@ level = "DEBUG"  # DEBUG, INFO, WARN, ERROR
 - **Constraint API**: [Player Constraint API](Constraint_README.md)
 - **调试日志指南**: [调试日志指南](Docs/DEBUG_LOGGING_GUIDE.md)
 - **CSV日志功能**: [CSV日志功能说明](Docs/CSV_LOGGING_FEATURE.md)
+- **版本更新日志**: [v1.1.5更新日志](Docs/v1.1.5_release_notes.md)
 
 ## 📄 许可证
 
@@ -225,6 +388,16 @@ level = "DEBUG"  # DEBUG, INFO, WARN, ERROR
 - 确保所有测试通过
 
 ## 📊 更新日志
+
+### v1.1.5 (2025-12-07)
+- 🆕 新增邮件警报系统，认证失败时自动发送通知
+- 🆕 新增IP地理位置追踪功能，自动记录认证失败者的地理位置
+- 🆕 新增CSV日志记录功能，将认证失败记录保存到CSV文件
+- 🆕 新增调试日志系统，提供分类的调试信息输出
+- 🆕 新增统一命令系统，整合所有管理命令到统一接口
+- 🔧 优化异步处理，邮件发送不影响服务器性能
+- 🔧 增强错误处理和网络请求稳定性
+- 📚 完善文档，新增多个功能指南和故障排除文档
 
 ### v1.0.0
 - 初始发布
