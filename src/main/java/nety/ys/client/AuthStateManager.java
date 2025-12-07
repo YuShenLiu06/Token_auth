@@ -62,6 +62,11 @@ public class AuthStateManager {
     private static AuthScreen authScreen;
     
     /**
+     * 认证结果处理定时器
+     */
+    private static java.util.Timer resultTimer;
+    
+    /**
      * 设置认证状态
      * 
      * @param newState 新状态
@@ -190,6 +195,13 @@ public class AuthStateManager {
         progress = 0;
         statusMessage = "";
         authScreen = null;
+        
+        // 取消并清理定时器
+        if (resultTimer != null) {
+            resultTimer.cancel();
+            resultTimer.purge();
+            resultTimer = null;
+        }
     }
     
     /**
@@ -230,8 +242,15 @@ public class AuthStateManager {
             setStatusMessage(message);
         }
         
+        // 取消之前的定时器（如果存在）
+        if (resultTimer != null) {
+            resultTimer.cancel();
+            resultTimer.purge();
+        }
+        
         // 3秒后重置状态或关闭屏幕
-        new java.util.Timer().schedule(new java.util.TimerTask() {
+        resultTimer = new java.util.Timer();
+        resultTimer.schedule(new java.util.TimerTask() {
             @Override
             public void run() {
                 if (success && authScreen != null) {
@@ -242,6 +261,8 @@ public class AuthStateManager {
                         }
                     });
                 }
+                // 清理定时器引用
+                resultTimer = null;
             }
         }, 3000); // 3秒
     }

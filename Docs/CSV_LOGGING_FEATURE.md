@@ -13,7 +13,7 @@
 
 ## 配置选项
 
-在服务器配置文件 `token-auth-server.toml` 中，有以下新增配置项：
+在服务器配置文件 `token-auth-server.properties` 中，有以下新增配置项：
 
 ```toml
 [csv_logging]

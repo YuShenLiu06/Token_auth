@@ -40,6 +40,15 @@ dependencies {
 	
 	// JavaMail API for email functionality
 	include(implementation('com.sun.mail:javax.mail:1.6.2'))
+	
+	// Jakarta Activation API for JavaMail (required for Java 9+)
+	include(implementation('com.sun.activation:jakarta.activation:2.0.1'))
+	
+	// Add legacy activation API for compatibility
+	include(implementation('javax.activation:activation:1.1.1'))
+	
+	// Add additional activation dependencies to ensure compatibility
+	include(implementation('org.glassfish.jaxb:jaxb-runtime:2.3.8'))
 }
 
 processResources {

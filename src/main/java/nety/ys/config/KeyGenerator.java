@@ -130,8 +130,8 @@ public class KeyGenerator {
         }
         
         System.out.println("\n请将此密钥同时配置到服务器和客户端配置文件中");
-        System.out.println("服务器配置文件: config/token-auth/token-auth-server.toml");
-        System.out.println("客户端配置文件: config/token-auth/token-auth-client.toml");
+        System.out.println("服务器配置文件: config/token-auth/token-auth-server.properties");
+        System.out.println("客户端配置文件: config/token-auth/token-auth-client.properties");
         
         // 生成示例挑战数据
         byte[] challenge = generateChallenge();

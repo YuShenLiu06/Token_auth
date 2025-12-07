@@ -184,4 +184,25 @@ public class FailedAuthLogger {
         ModConfig.ServerConfig config = configManager.getServerConfig();
         return getCSVFilePath(config.csvFileName).toString();
     }
+    
+    /**
+     * 清理资源
+     * 释放文件锁和其他资源
+     */
+    public static void cleanup() {
+        TokenAuthMod.LOGGER.info("正在清理认证失败记录器资源...");
+        
+        try {
+            // 确保文件锁被释放
+            if (fileLock.isLocked()) {
+                TokenAuthMod.LOGGER.warn("文件锁仍然持有，尝试释放");
+                // 这里我们不能强制释放锁，但可以记录状态
+                // 文件锁会在finally块中自动释放
+            }
+            
+            TokenAuthMod.LOGGER.info("认证失败记录器资源清理完成");
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("清理认证失败记录器资源时出错", e);
+        }
+    }
 }

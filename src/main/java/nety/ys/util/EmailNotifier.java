@@ -9,6 +9,7 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,6 +91,8 @@ public class EmailNotifier {
     private static boolean sendEmailWithJavaMail(EmailConfig config, String subject, String content) {
         try {
             DebugLogger.email("使用JavaMail API发送邮件到: {}, SSL启用: {}", config.getToAddress(), config.isEnableSSL());
+            DebugLogger.email("邮件主题: {}", subject);
+            DebugLogger.email("邮件内容预览: {}", content.length() > 100 ? content.substring(0, 100) + "..." : content);
             
             // 创建邮件会话属性
             Properties props = new Properties();
@@ -128,23 +131,30 @@ public class EmailNotifier {
                 props.put("mail.smtp.socketFactory.port", config.getSmtpPort());
                 props.put("mail.smtp.socketFactory.fallback", "false");
                 props.put("mail.smtp.ssl.socketFactory.port", config.getSmtpPort());
+                DebugLogger.email("检测到Gmail SMTP，应用特定配置");
             }
             
             // 添加调试信息
             props.put("mail.debug", "true");
             
+            DebugLogger.email("正在创建邮件会话，SMTP服务器: {}:{}", config.getSmtpHost(), config.getSmtpPort());
+            DebugLogger.email("认证用户名: {}", config.getUsername());
+            
             // 创建邮件会话
             Session session = Session.getInstance(props, new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
+                    DebugLogger.email("正在使用SMTP认证: {}", config.getUsername());
                     return new PasswordAuthentication(config.getUsername(), config.getPassword());
                 }
             });
             
             // 启用调试模式
             session.setDebug(true);
+            DebugLogger.email("邮件会话调试模式已启用");
             
             // 创建邮件消息
+            DebugLogger.email("正在创建邮件消息...");
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(config.getFromAddress()));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(config.getToAddress()));
@@ -152,14 +162,32 @@ public class EmailNotifier {
             message.setText(content);
             message.setSentDate(new java.util.Date());
             
+            DebugLogger.email("邮件消息创建完成，发件人: {}, 收件人: {}",
+                config.getFromAddress(), config.getToAddress());
+            
             // 发送邮件
+            DebugLogger.email("开始发送邮件...");
             Transport.send(message);
             
             DebugLogger.email("邮件发送成功");
             return true;
             
+        } catch (MessagingException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Authentication failed")) {
+                TokenAuthMod.LOGGER.error("SMTP认证失败，请检查用户名和密码: {}", e.getMessage());
+                DebugLogger.email("SMTP认证失败详情: {}", e.toString());
+            } else if (e instanceof SendFailedException ||
+                      (e.getMessage() != null && e.getMessage().contains("Invalid addresses"))) {
+                TokenAuthMod.LOGGER.error("邮件发送失败，可能是收件人地址无效: {}", e.getMessage());
+                DebugLogger.email("邮件发送失败详情: {}", e.toString());
+            } else {
+                TokenAuthMod.LOGGER.error("邮件消息处理错误: {}", e.getMessage());
+                DebugLogger.email("邮件消息处理错误详情: {}", e.toString());
+            }
+            return false;
         } catch (Exception e) {
-            TokenAuthMod.LOGGER.error("使用JavaMail发送邮件时出错", e);
+            TokenAuthMod.LOGGER.error("使用JavaMail发送邮件时出现未知错误", e);
+            DebugLogger.email("未知错误详情: {}", e.toString());
             return false;
         }
     }
@@ -213,7 +241,29 @@ public class EmailNotifier {
      * 关闭邮件执行器
      */
     public static void shutdown() {
-        emailExecutor.shutdown();
+        TokenAuthMod.LOGGER.info("正在关闭邮件通知服务...");
+        
+        if (emailExecutor != null && !emailExecutor.isShutdown()) {
+            emailExecutor.shutdown();
+            try {
+                // 等待当前任务完成，最多等待10秒
+                if (!emailExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    TokenAuthMod.LOGGER.warn("邮件执行器未能在10秒内正常关闭，强制关闭");
+                    emailExecutor.shutdownNow();
+                    
+                    // 再给5秒时间让任务响应中断
+                    if (!emailExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                        TokenAuthMod.LOGGER.error("邮件执行器强制关闭失败");
+                    }
+                } else {
+                    TokenAuthMod.LOGGER.info("邮件通知服务已正常关闭");
+                }
+            } catch (InterruptedException e) {
+                TokenAuthMod.LOGGER.warn("等待邮件执行器关闭时被中断，强制关闭");
+                emailExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
     
     /**

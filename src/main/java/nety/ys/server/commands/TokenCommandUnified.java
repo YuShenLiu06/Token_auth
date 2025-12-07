@@ -294,7 +294,8 @@ public class TokenCommandUnified {
                         config.smtpPassword,
                         config.emailFromAddress,
                         config.emailToAddress,
-                        config.serverName
+                        config.serverName,
+                        config.enableSSL
                     ).thenAccept(success -> {
                         if (success) {
                             context.getSource().sendFeedback(

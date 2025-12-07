@@ -195,7 +195,11 @@ public class AuthPacketHandler {
         // 记录到CSV文件
         
         // 发送认证失败警报邮件
-        AuthAlertService.sendAuthFailureAlert(player.getName().getString(), playerAddress, reason);
+        AuthAlertService.sendAuthFailureAlert(player.getName().getString(), playerAddress, reason)
+            .exceptionally(throwable -> {
+                TokenAuthMod.LOGGER.error("发送认证失败警报邮件时出错", throwable);
+                return null;
+            });
         FailedAuthLogger.logFailedAuth(player.getName().getString(), playerAddress, reason);
         
         // 增加失败尝试次数

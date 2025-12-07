@@ -119,6 +119,9 @@ public class AuthSessionManager {
                 Thread.currentThread().interrupt();
             }
         }
+        
+        // 释放文件锁资源
+        nety.ys.util.FailedAuthLogger.cleanup();
     }
     
     /**

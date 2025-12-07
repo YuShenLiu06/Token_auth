@@ -185,6 +185,19 @@ public class TokenAuthMod implements ModInitializer {
         // 注册客户端数据包
         PacketRegistry.registerClientPackets();
         
+        // 添加关闭钩子
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("客户端关闭钩子触发，清理资源...");
+            
+            // 重置认证状态
+            nety.ys.client.AuthStateManager.reset();
+            
+            // 注销客户端数据包
+            PacketRegistry.unregisterClientPackets();
+            
+            LOGGER.info("客户端资源清理完成");
+        }));
+        
         LOGGER.info("客户端认证系统初始化完成");
     }
     
@@ -201,6 +214,15 @@ public class TokenAuthMod implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             DebugLogger.debug("服务器已停止，清理认证会话");
             AuthSessionManager.onServerStopped();
+            
+            // 注销数据包处理器
+            PacketRegistry.unregisterServerPackets();
+            
+            // 关闭邮件通知服务
+            nety.ys.util.EmailNotifier.shutdown();
+            
+            // 关闭认证警报服务
+            nety.ys.server.AuthAlertService.shutdown();
         });
         
         // 玩家连接事件

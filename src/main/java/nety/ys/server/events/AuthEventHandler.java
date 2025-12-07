@@ -107,7 +107,11 @@ public class AuthEventHandler {
                         
                         // 发送认证超时警报邮件
                         try {
-                            AuthAlertService.sendAuthTimeoutAlert(player.getName().getString(), playerAddress);
+                            AuthAlertService.sendAuthTimeoutAlert(player.getName().getString(), playerAddress)
+                                .exceptionally(throwable -> {
+                                    TokenAuthMod.LOGGER.error("发送认证超时警报邮件时出错", throwable);
+                                    return null;
+                                });
                         } catch (Exception e) {
                             TokenAuthMod.LOGGER.error("发送认证超时警报邮件时出错", e);
                         }

@@ -1,6 +1,8 @@
 package nety.ys.util;
 
 import nety.ys.TokenAuthMod;
+import nety.ys.config.ModConfig;
+import nety.ys.config.SimpleConfigManager;
 
 import java.net.InetAddress;
 import java.time.LocalDateTime;
@@ -10,14 +12,76 @@ import java.util.concurrent.CompletableFuture;
 /**
  * 邮件警报测试类
  * 用于测试邮件发送功能
- * 
+ *
  * @author nety.ys
  */
 public class EmailAlertTest {
     
     /**
-     * 测试邮件发送功能
-     * 
+     * 测试邮件发送功能（从配置文件读取配置）
+     *
+     * @return CompletableFuture<Boolean> 表示测试是否成功
+     */
+    public static CompletableFuture<Boolean> testEmailSending() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                TokenAuthMod.LOGGER.info("开始测试邮件发送功能...");
+                
+                // 从配置管理器获取配置
+                SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+                ModConfig.ServerConfig config = configManager.getServerConfig();
+                
+                // 创建邮件配置
+                EmailNotifier.EmailConfig emailConfig = new EmailNotifier.EmailConfig(
+                    config.smtpHost,
+                    config.smtpPort,
+                    config.smtpUsername,
+                    config.smtpPassword,
+                    config.emailFromAddress,
+                    config.emailToAddress,
+                    config.enableSSL
+                );
+                
+                // 验证配置
+                if (!emailConfig.isValid()) {
+                    TokenAuthMod.LOGGER.error("邮件配置无效，测试失败");
+                    return false;
+                }
+                
+                // 获取当前时间
+                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
+                
+                // 发送测试邮件
+                CompletableFuture<Boolean> result = EmailNotifier.sendIntrusionAlert(
+                    config.serverName,
+                    "TestPlayer",
+                    timestamp,
+                    "127.0.0.1",
+                    "本地测试 (reserved range)",
+                    "测试邮件功能",
+                    emailConfig);
+                
+                // 等待发送完成
+                Boolean success = result.get();
+                
+                if (success) {
+                    TokenAuthMod.LOGGER.info("邮件发送测试成功");
+                } else {
+                    TokenAuthMod.LOGGER.error("邮件发送测试失败");
+                }
+                
+                return success;
+                
+            } catch (Exception e) {
+                TokenAuthMod.LOGGER.error("测试邮件发送功能时出错", e);
+                return false;
+            }
+        });
+    }
+    
+    /**
+     * 测试邮件发送功能（使用传入的参数）
+     *
      * @param smtpHost SMTP服务器地址
      * @param smtpPort SMTP端口
      * @param username SMTP用户名
@@ -25,6 +89,7 @@ public class EmailAlertTest {
      * @param fromAddress 发件人邮箱
      * @param toAddress 收件人邮箱
      * @param serverName 服务器名称
+     * @param enableSSL 是否启用SSL
      * @return CompletableFuture<Boolean> 表示测试是否成功
      */
     public static CompletableFuture<Boolean> testEmailSending(
@@ -34,7 +99,8 @@ public class EmailAlertTest {
             String password,
             String fromAddress,
             String toAddress,
-            String serverName) {
+            String serverName,
+            boolean enableSSL) {
         
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -42,7 +108,7 @@ public class EmailAlertTest {
                 
                 // 创建邮件配置
                 EmailNotifier.EmailConfig emailConfig = new EmailNotifier.EmailConfig(
-                    smtpHost, smtpPort, username, password, fromAddress, toAddress, false);
+                    smtpHost, smtpPort, username, password, fromAddress, toAddress, enableSSL);
                 
                 // 验证配置
                 if (!emailConfig.isValid()) {

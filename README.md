@@ -48,7 +48,7 @@
 
 ### 服务端配置文件位置
 ```
-config/token-auth-server.toml
+config/token-auth/token-auth-server.properties
 ```
 
 ### 主要配置选项
@@ -72,7 +72,7 @@ block_duration_minutes = 10
 
 ### 客户端配置文件位置
 ```
-config/token-auth-client.toml
+config/token-auth/token-auth-client.properties
 ```
 
 ## 🔧 使用方法

@@ -24,9 +24,14 @@ import java.util.Map;
  */
 public class IPGeolocationUtil {
     
-    private static final String API_URL = "http://ip-api.com/json/";
+    private static final String API_URL = "http://208.95.112.1/json/";
     private static final String LANGUAGE_PARAM = "?lang=zh-CN";
     private static final Gson gson = new Gson();
+    
+    // 连接和读取超时时间（毫秒）
+    private static final int CONNECT_TIMEOUT = 3000; // 3秒连接超时
+    private static final int READ_TIMEOUT = 5000;    // 5秒读取超时
+    private static final int MAX_RETRIES = 2;        // 最大重试次数
     
     /**
      * IP地理位置信息数据类
@@ -106,7 +111,20 @@ public class IPGeolocationUtil {
      * @return 地理位置信息
      */
     public static GeoLocationInfo getGeoLocation(String ipAddress) {
+        return getGeoLocationWithRetry(ipAddress, 0);
+    }
+    
+    /**
+     * 带重试机制的地理位置获取
+     *
+     * @param ipAddress IP地址字符串
+     * @param retryCount 当前重试次数
+     * @return 地理位置信息
+     */
+    private static GeoLocationInfo getGeoLocationWithRetry(String ipAddress, int retryCount) {
         try {
+            DebugLogger.email("正在获取IP {} 的地理位置信息（第{}次尝试）...", ipAddress, retryCount + 1);
+            
             // 构建请求URL
             String requestUrl = API_URL + ipAddress + LANGUAGE_PARAM;
             URL url = new URL(requestUrl);
@@ -114,8 +132,9 @@ public class IPGeolocationUtil {
             // 发送HTTP请求
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000); // 5秒超时
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(CONNECT_TIMEOUT);
+            connection.setReadTimeout(READ_TIMEOUT);
+            connection.setRequestProperty("User-Agent", "TokenAuth-Mod/1.1.5");
             
             int responseCode = connection.getResponseCode();
             if (responseCode == 200) {
@@ -127,6 +146,8 @@ public class IPGeolocationUtil {
                     response.append(line);
                 }
                 reader.close();
+                
+                DebugLogger.email("IP地理位置API响应: {}", response.toString());
                 
                 // 解析JSON响应
                 JsonObject jsonObject = gson.fromJson(response.toString(), JsonObject.class);
@@ -141,17 +162,46 @@ public class IPGeolocationUtil {
                 String org = jsonObject.has("org") ? jsonObject.get("org").getAsString() : "";
                 String query = jsonObject.has("query") ? jsonObject.get("query").getAsString() : ipAddress;
                 
+                DebugLogger.email("IP {} 地理位置信息获取成功: {}", ipAddress,
+                    new GeoLocationInfo(status, message, country, regionName, city, isp, org, query).getFullLocation());
+                
                 return new GeoLocationInfo(status, message, country, regionName, city, isp, org, query);
             } else {
                 TokenAuthMod.LOGGER.warn("IP地理位置API请求失败，响应码: {}", responseCode);
-                return new GeoLocationInfo("fail", "API请求失败，响应码: " + responseCode, "", "", "", "", "", ipAddress);
+                return handleRetry(ipAddress, retryCount, "API请求失败，响应码: " + responseCode);
             }
         } catch (IOException e) {
             TokenAuthMod.LOGGER.error("获取IP地理位置信息时出错", e);
-            return new GeoLocationInfo("fail", "网络错误: " + e.getMessage(), "", "", "", "", "", ipAddress);
+            return handleRetry(ipAddress, retryCount, "网络错误: " + e.getMessage());
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("解析IP地理位置信息时出错", e);
             return new GeoLocationInfo("fail", "解析错误: " + e.getMessage(), "", "", "", "", "", ipAddress);
+        }
+    }
+    
+    /**
+     * 处理重试逻辑
+     *
+     * @param ipAddress IP地址
+     * @param retryCount 当前重试次数
+     * @param errorMessage 错误消息
+     * @return 地理位置信息
+     */
+    private static GeoLocationInfo handleRetry(String ipAddress, int retryCount, String errorMessage) {
+        if (retryCount < MAX_RETRIES) {
+            DebugLogger.email("IP {} 地理位置获取失败，{}ms后进行第{}次重试...",
+                ipAddress, 1000 * (retryCount + 1), retryCount + 2);
+            
+            try {
+                Thread.sleep(1000 * (retryCount + 1)); // 递增延迟
+                return getGeoLocationWithRetry(ipAddress, retryCount + 1);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return new GeoLocationInfo("fail", "重试被中断: " + errorMessage, "", "", "", "", "", ipAddress);
+            }
+        } else {
+            TokenAuthMod.LOGGER.warn("IP {} 地理位置获取失败，已达到最大重试次数: {}", ipAddress, MAX_RETRIES + 1);
+            return new GeoLocationInfo("fail", errorMessage + " (已重试" + MAX_RETRIES + "次)", "", "", "", "", "", ipAddress);
         }
     }
     
