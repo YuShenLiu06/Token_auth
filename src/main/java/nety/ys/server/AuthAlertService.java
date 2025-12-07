@@ -75,7 +75,8 @@ public class AuthAlertService {
                 config.smtpUsername,
                 config.smtpPassword,
                 config.emailFromAddress,
-                config.emailToAddress
+                config.emailToAddress,
+                config.enableSSL
             );
             
             DebugLogger.email("创建邮件配置完成，准备发送邮件");

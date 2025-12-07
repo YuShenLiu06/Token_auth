@@ -49,6 +49,8 @@ serverName = "Minecraft服务器"
 smtpHost = ""
 # SMTP端口
 smtpPort = "587"
+# 是否启用SSL连接（启用后使用直接SSL连接，禁用时使用STARTTLS）
+enableSSL = false
 # SMTP用户名
 smtpUsername = ""
 # SMTP密码

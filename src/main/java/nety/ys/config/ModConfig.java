@@ -51,6 +51,7 @@ public class ModConfig {
         public String serverName = "Minecraft服务器"; // 服务器名称
         public String smtpHost = ""; // SMTP服务器地址
         public String smtpPort = "587"; // SMTP端口
+        public boolean enableSSL = false; // 是否启用SSL连接
         public String smtpUsername = ""; // SMTP用户名
         public String smtpPassword = ""; // SMTP密码
         public String emailFromAddress = ""; // 发件人邮箱

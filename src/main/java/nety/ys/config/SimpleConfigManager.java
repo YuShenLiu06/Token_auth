@@ -247,6 +247,7 @@ public class SimpleConfigManager {
         serverConfig.serverName = props.getProperty("email.serverName", "Minecraft服务器");
         serverConfig.smtpHost = props.getProperty("email.smtpHost", "");
         serverConfig.smtpPort = props.getProperty("email.smtpPort", "587");
+        serverConfig.enableSSL = Boolean.parseBoolean(props.getProperty("email.enableSSL", "false"));
         serverConfig.smtpUsername = props.getProperty("email.smtpUsername", "");
         serverConfig.smtpPassword = props.getProperty("email.smtpPassword", "");
         serverConfig.emailFromAddress = props.getProperty("email.fromAddress", "");
@@ -301,6 +302,7 @@ public class SimpleConfigManager {
         props.setProperty("email.serverName", serverConfig.serverName);
         props.setProperty("email.smtpHost", serverConfig.smtpHost);
         props.setProperty("email.smtpPort", serverConfig.smtpPort);
+        props.setProperty("email.enableSSL", String.valueOf(serverConfig.enableSSL));
         props.setProperty("email.smtpUsername", serverConfig.smtpUsername);
         props.setProperty("email.smtpPassword", serverConfig.smtpPassword);
         props.setProperty("email.fromAddress", serverConfig.emailFromAddress);

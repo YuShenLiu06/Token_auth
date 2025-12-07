@@ -78,11 +78,36 @@ config/token-auth-client.toml
 ## 🔧 使用方法
 
 ### 管理员命令
+Token Auth Mod 提供了丰富的管理命令，用于配置和监控系统状态。
+
+**主要命令**:
 ```
-/token generate - 生成新的认证令牌
-/token status - 查看认证系统状态
-/token unblock <ip> - 解除IP阻止
+/token reload - 重新加载配置
+/token generate-key - 生成新的共享密钥
+/token status - 查看系统状态
+/token block-ip <IP> [分钟] - 阻止IP地址
+/token unblock-ip <IP> - 解除IP阻止
+/token list-blocked-ips - 列出被阻止的IP
+/token list-authenticated - 列出已认证玩家
+/token remove-auth <玩家> - 移除玩家认证状态
 ```
+
+**CSV记录命令**:
+```
+/csvtest - 测试CSV记录功能
+/csvstatus - 查看CSV记录状态
+/csvenable - 启用CSV记录
+/csvdisable - 禁用CSV记录
+/csvtimeout - 切换超时记录
+```
+
+**调试命令**:
+```
+/debugtest - 测试调试日志功能
+/debugstatus - 查看调试模式状态
+```
+
+📖 **完整命令参考**: 详细的命令说明和使用示例请参考 [命令参考指南](Docs/COMMAND_REFERENCE.md)
 
 ### 认证流程
 1. 玩家加入服务器
@@ -172,7 +197,12 @@ level = "DEBUG"  # DEBUG, INFO, WARN, ERROR
 
 - **GitHub仓库**: [https://github.com/nety-ys/token-auth-mod](https://github.com/nety-ys/token-auth-mod)
 - **问题反馈**: [GitHub Issues](https://github.com/nety-ys/token-auth-mod/issues)
+- **命令参考**: [命令参考指南](Docs/COMMAND_REFERENCE.md)
+- **邮件警报配置**: [邮件警报配置指南](Docs/Email_Alert_Configuration_Guide.md)
+- **邮件故障排除**: [邮件功能故障排除](Docs/EMAIL_TROUBLESHOOTING.md)
 - **Constraint API**: [Player Constraint API](Constraint_README.md)
+- **调试日志指南**: [调试日志指南](Docs/DEBUG_LOGGING_GUIDE.md)
+- **CSV日志功能**: [CSV日志功能说明](Docs/CSV_LOGGING_FEATURE.md)
 
 ## 📄 许可证
 

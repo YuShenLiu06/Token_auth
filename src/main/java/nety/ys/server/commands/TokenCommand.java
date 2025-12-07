@@ -14,7 +14,9 @@ import net.minecraft.util.Formatting;
 import nety.ys.TokenAuthMod;
 import nety.ys.config.KeyGenerator;
 import nety.ys.config.ModConfig;
+import nety.ys.config.SimpleConfigManager;
 import nety.ys.server.AuthSessionManager;
+import nety.ys.util.EmailNotifier;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -64,6 +66,12 @@ public class TokenCommand {
                 .then(CommandManager.argument("player", com.mojang.brigadier.arguments.StringArgumentType.string())
                     .executes(context -> removeAuthentication(context,
                         com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
+            .then(CommandManager.literal("enable-email")
+                .executes(TokenCommand::enableEmailAlerts))
+            .then(CommandManager.literal("disable-email")
+                .executes(TokenCommand::disableEmailAlerts))
+            .then(CommandManager.literal("test-email")
+                .executes(TokenCommand::testEmailAlert))
         );
     }
     
@@ -146,7 +154,13 @@ public class TokenCommand {
             status.append(Text.literal("§a认证日志: " + (config.enableAuthLogging ? "§2启用" : "§c禁用") + "\n"));
             
             // CSV记录设置
-            status.append(Text.literal("§aCSV记录: " + (config.enableCSVLogging ? "§2启用" : "§c禁用")));
+            status.append(Text.literal("§aCSV记录: " + (config.enableCSVLogging ? "§2启用" : "§c禁用") + "\n"));
+            
+            // 邮件警报设置
+            status.append(Text.literal("§a邮件警报: " + (config.enableEmailAlerts ? "§2启用" : "§c禁用") + "\n"));
+            status.append(Text.literal("§aSMTP服务器: §b" + (config.smtpHost.isEmpty() ? "未配置" : config.smtpHost) + "\n"));
+            status.append(Text.literal("§a发件人: §b" + (config.emailFromAddress.isEmpty() ? "未配置" : config.emailFromAddress) + "\n"));
+            status.append(Text.literal("§a收件人: §b" + (config.emailToAddress.isEmpty() ? "未配置" : config.emailToAddress)));
             
             context.getSource().sendFeedback(status, false);
             return 1;
@@ -283,6 +297,123 @@ public class TokenCommand {
         } catch (Exception e) {
             TokenAuthMod.LOGGER.error("移除玩家认证时出错", e);
             context.getSource().sendError(Text.literal("§c移除玩家认证失败: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 启用邮件警报命令处理
+     *
+     * @param context 命令上下文
+     * @return 命令执行结果
+     */
+    private static int enableEmailAlerts(CommandContext<ServerCommandSource> context) {
+        try {
+            SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+            ModConfig.ServerConfig config = configManager.getServerConfig();
+            config.enableEmailAlerts = true;
+            
+            context.getSource().sendFeedback(
+                Text.literal("§a邮件警报已启用，认证失败和超时将发送邮件通知"), true);
+            return 1;
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("启用邮件警报时出错", e);
+            context.getSource().sendError(Text.literal("§c启用邮件警报失败: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 禁用邮件警报命令处理
+     *
+     * @param context 命令上下文
+     * @return 命令执行结果
+     */
+    private static int disableEmailAlerts(CommandContext<ServerCommandSource> context) {
+        try {
+            SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+            ModConfig.ServerConfig config = configManager.getServerConfig();
+            config.enableEmailAlerts = false;
+            
+            context.getSource().sendFeedback(
+                Text.literal("§a邮件警报已禁用，认证失败和超时将不再发送邮件通知"), true);
+            return 1;
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("禁用邮件警报时出错", e);
+            context.getSource().sendError(Text.literal("§c禁用邮件警报失败: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    /**
+     * 测试邮件警报命令处理
+     *
+     * @param context 命令上下文
+     * @return 命令执行结果
+     */
+    private static int testEmailAlert(CommandContext<ServerCommandSource> context) {
+        try {
+            SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
+            ModConfig.ServerConfig config = configManager.getServerConfig();
+            
+            // 检查邮件配置是否有效
+            if (!config.enableEmailAlerts) {
+                context.getSource().sendError(Text.literal("§c邮件警报功能未启用，请先使用 /token enable-email 启用"));
+                return 0;
+            }
+            
+            // 检查邮件配置是否完整
+            if (config.smtpHost.isEmpty() || config.smtpUsername.isEmpty() ||
+                config.emailFromAddress.isEmpty() || config.emailToAddress.isEmpty()) {
+                context.getSource().sendError(Text.literal("§c邮件配置不完整，请检查配置文件"));
+                return 0;
+            }
+            
+            context.getSource().sendFeedback(
+                Text.literal("§6正在发送测试邮件..."), false);
+            
+            // 在服务器线程中执行测试
+            context.getSource().getServer().execute(() -> {
+                try {
+                    // 创建邮件配置
+                    EmailNotifier.EmailConfig emailConfig = new EmailNotifier.EmailConfig(
+                        config.smtpHost,
+                        config.smtpPort,
+                        config.smtpUsername,
+                        config.smtpPassword,
+                        config.emailFromAddress,
+                        config.emailToAddress,
+                        config.enableSSL
+                    );
+                    
+                    // 发送测试邮件
+                    EmailNotifier.sendIntrusionAlert(
+                        config.serverName,
+                        "测试玩家",
+                        java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")),
+                        "127.0.0.1",
+                        "测试位置",
+                        "邮件功能测试",
+                        emailConfig
+                    ).thenAccept(success -> {
+                        if (success) {
+                            context.getSource().sendFeedback(
+                                Text.literal("§a测试邮件发送成功！"), true);
+                        } else {
+                            context.getSource().sendError(
+                                Text.literal("§c测试邮件发送失败，请检查配置和日志"));
+                        }
+                    });
+                } catch (Exception e) {
+                    TokenAuthMod.LOGGER.error("发送测试邮件时出错", e);
+                    context.getSource().sendError(Text.literal("§c发送测试邮件失败: " + e.getMessage()));
+                }
+            });
+            
+            return 1;
+        } catch (Exception e) {
+            TokenAuthMod.LOGGER.error("测试邮件警报时出错", e);
+            context.getSource().sendError(Text.literal("§c测试邮件警报失败: " + e.getMessage()));
             return 0;
         }
     }

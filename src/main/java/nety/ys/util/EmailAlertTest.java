@@ -42,7 +42,7 @@ public class EmailAlertTest {
                 
                 // 创建邮件配置
                 EmailNotifier.EmailConfig emailConfig = new EmailNotifier.EmailConfig(
-                    smtpHost, smtpPort, username, password, fromAddress, toAddress);
+                    smtpHost, smtpPort, username, password, fromAddress, toAddress, false);
                 
                 // 验证配置
                 if (!emailConfig.isValid()) {

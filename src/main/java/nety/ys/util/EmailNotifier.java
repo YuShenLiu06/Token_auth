@@ -89,25 +89,41 @@ public class EmailNotifier {
      */
     private static boolean sendEmailWithJavaMail(EmailConfig config, String subject, String content) {
         try {
-            DebugLogger.email("使用JavaMail API发送邮件到: {}", config.getToAddress());
+            DebugLogger.email("使用JavaMail API发送邮件到: {}, SSL启用: {}", config.getToAddress(), config.isEnableSSL());
             
             // 创建邮件会话属性
             Properties props = new Properties();
             props.put("mail.smtp.host", config.getSmtpHost());
             props.put("mail.smtp.port", config.getSmtpPort());
             props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.ssl.trust", "*");
             props.put("mail.smtp.connectiontimeout", "10000");
             props.put("mail.smtp.timeout", "15000");
             
             // 添加更多SSL/TLS配置以提高兼容性
             props.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
-            props.put("mail.smtp.ssl.enable", "false"); // 我们使用STARTTLS而不是直接SSL
-            props.put("mail.smtp.starttls.required", "true");
             
-            // Gmail特定配置
-            if (config.getSmtpHost().contains("gmail.com")) {
+            // 根据SSL配置设置不同的加密方式
+            if (config.isEnableSSL()) {
+                // 启用直接SSL连接
+                props.put("mail.smtp.ssl.enable", "true");
+                props.put("mail.smtp.starttls.enable", "false");
+                props.put("mail.smtp.starttls.required", "false");
+                props.put("mail.smtp.ssl.trust", "*");
+                props.put("mail.smtp.ssl.socketFactory", "javax.net.ssl.SSLSocketFactory");
+                props.put("mail.smtp.socketFactory.port", config.getSmtpPort());
+                props.put("mail.smtp.socketFactory.fallback", "false");
+                DebugLogger.email("配置为SSL模式，端口: {}", config.getSmtpPort());
+            } else {
+                // 使用STARTTLS
+                props.put("mail.smtp.ssl.enable", "false");
+                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.smtp.starttls.required", "true");
+                props.put("mail.smtp.ssl.trust", "*");
+                DebugLogger.email("配置为STARTTLS模式，端口: {}", config.getSmtpPort());
+            }
+            
+            // Gmail特定配置（如果启用了SSL，则不需要额外配置）
+            if (!config.isEnableSSL() && config.getSmtpHost().contains("gmail.com")) {
                 props.put("mail.smtp.ssl.socketFactory", "javax.net.ssl.SSLSocketFactory");
                 props.put("mail.smtp.socketFactory.port", config.getSmtpPort());
                 props.put("mail.smtp.socketFactory.fallback", "false");
@@ -210,15 +226,25 @@ public class EmailNotifier {
         private final String password;
         private final String fromAddress;
         private final String toAddress;
+        private final boolean enableSSL;
         
-        public EmailConfig(String smtpHost, String smtpPort, String username, 
-                          String password, String fromAddress, String toAddress) {
+        public EmailConfig(String smtpHost, String smtpPort, String username,
+                          String password, String fromAddress, String toAddress, boolean enableSSL) {
             this.smtpHost = smtpHost;
             this.smtpPort = smtpPort;
             this.username = username;
             this.password = password;
             this.fromAddress = fromAddress;
             this.toAddress = toAddress;
+            this.enableSSL = enableSSL;
+        }
+        
+        /**
+         * 兼容性构造函数，默认不启用SSL
+         */
+        public EmailConfig(String smtpHost, String smtpPort, String username,
+                          String password, String fromAddress, String toAddress) {
+            this(smtpHost, smtpPort, username, password, fromAddress, toAddress, false);
         }
         
         public String getSmtpHost() {
@@ -243,6 +269,10 @@ public class EmailNotifier {
         
         public String getToAddress() {
             return toAddress;
+        }
+        
+        public boolean isEnableSSL() {
+            return enableSSL;
         }
         
         /**

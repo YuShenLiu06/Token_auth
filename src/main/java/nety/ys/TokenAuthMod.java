@@ -11,8 +11,7 @@ import nety.ys.config.ConfigManager;
 import nety.ys.config.SimpleConfigManager;
 import nety.ys.network.PacketRegistry;
 import nety.ys.server.AuthSessionManager;
-import nety.ys.server.commands.TokenCommand;
-import nety.ys.server.commands.TokenCommandSimple;
+import nety.ys.server.commands.TokenCommandUnified;
 import nety.ys.server.events.AuthEventHandler;
 import nety.ys.server.constraint.ConstraintManager;
 import nety.ys.util.DebugLogger;
@@ -134,9 +133,10 @@ public class TokenAuthMod implements ModInitializer {
         
         // 注册管理命令
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            TokenCommand.register(dispatcher);
-            TokenCommandSimple.register(dispatcher);
-            nety.ys.server.commands.DebugLoggerTestCommand.register(dispatcher);
+            TokenCommandUnified.register(dispatcher);
+            // 保留原有的简单命令用于向后兼容
+            // TokenCommandSimple.register(dispatcher);
+            // nety.ys.server.commands.DebugLoggerTestCommand.register(dispatcher);
         });
         
         // 延迟初始化约束系统，确保ConstraintAPI已经完全初始化
