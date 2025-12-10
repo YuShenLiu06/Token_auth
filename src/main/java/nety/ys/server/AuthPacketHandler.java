@@ -41,6 +41,12 @@ public class AuthPacketHandler {
             SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
             ModConfig.ServerConfig config = configManager.getServerConfig();
             
+            // 添加空值检查，防止在客户端环境中出现NullPointerException
+            if (config == null) {
+                TokenAuthMod.LOGGER.warn("服务器配置为null，可能是客户端环境，忽略令牌响应");
+                return;
+            }
+            
             // 检查认证是否启用
             if (!config.enabled) {
                 TokenAuthMod.LOGGER.warn("收到令牌响应，但认证系统已禁用");

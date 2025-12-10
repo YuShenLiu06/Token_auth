@@ -33,20 +33,39 @@ public class ConfigManager {
     private ModConfig.ClientConfig clientConfig;
     
     /**
+     * 构造函数 - 立即初始化配置对象以避免NullPointerException
+     */
+    public ConfigManager() {
+        // 立即初始化配置对象，确保它们永远不会为null
+        this.serverConfig = new ModConfig.ServerConfig();
+        this.clientConfig = new ModConfig.ClientConfig();
+    }
+    
+    /**
      * 获取服务器配置
-     * 
-     * @return 服务器配置实例
+     *
+     * @return 服务器配置实例，永远不会为null
      */
     public ModConfig.ServerConfig getServerConfig() {
+        // 确保永远不会返回null
+        if (serverConfig == null) {
+            LOGGER.error("服务器配置对象为null，使用默认配置");
+            serverConfig = new ModConfig.ServerConfig();
+        }
         return serverConfig;
     }
     
     /**
      * 获取客户端配置
-     * 
-     * @return 客户端配置实例
+     *
+     * @return 客户端配置实例，永远不会为null
      */
     public ModConfig.ClientConfig getClientConfig() {
+        // 确保永远不会返回null
+        if (clientConfig == null) {
+            LOGGER.error("客户端配置对象为null，使用默认配置");
+            clientConfig = new ModConfig.ClientConfig();
+        }
         return clientConfig;
     }
     

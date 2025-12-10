@@ -89,6 +89,25 @@ public class TokenAuthMod implements ModInitializer {
             initializeServer();
         } else {
             initializeClient();
+            
+            // 在客户端环境中，如果是本地游戏（集成服务器），也需要初始化服务端组件
+            // 因为本地游戏会同时运行客户端和服务端
+            try {
+                LOGGER.info("检测到客户端环境，同时初始化服务端认证系统组件以支持本地游戏");
+                
+                // 初始化服务端配置
+                configManager.loadServerConfig();
+                
+                // 初始化认证会话管理器
+                AuthSessionManager.initialize();
+                
+                // 注册服务端数据包
+                PacketRegistry.registerServerPackets();
+                
+                LOGGER.info("本地游戏所需的服务端组件初始化完成");
+            } catch (Exception e) {
+                LOGGER.error("在客户端环境中初始化服务端组件时出错", e);
+            }
         }
         
         LOGGER.info("Token Auth Mod 初始化完成！版本: " + MOD_VERSION);
@@ -178,6 +197,15 @@ public class TokenAuthMod implements ModInitializer {
         
         // 加载客户端配置
         configManager.loadClientConfig();
+        
+        // 在客户端环境中也初始化服务端配置的默认值，避免NullPointerException
+        // 这样即使客户端代码尝试访问服务端配置也不会出错
+        try {
+            configManager.loadServerConfig();
+            LOGGER.info("客户端环境中服务端配置默认值已加载");
+        } catch (Exception e) {
+            LOGGER.warn("在客户端环境中加载服务端配置默认值时出错，但这不影响客户端功能", e);
+        }
         
         // 初始化客户端令牌管理器
         ClientTokenManager.initialize();

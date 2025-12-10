@@ -43,6 +43,12 @@ public class ServerLoginNetworkHandlerMixin {
         // 获取服务器配置
         ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
         
+        // 添加空值检查，防止在客户端环境中出现NullPointerException
+        if (config == null) {
+            TokenAuthMod.LOGGER.warn("服务器配置为null，可能是客户端环境，继续原版登录流程");
+            return;
+        }
+        
         // 检查认证是否启用
         if (!config.enabled) {
             TokenAuthMod.LOGGER.info("认证系统未启用，继续原版登录流程");
@@ -51,9 +57,23 @@ public class ServerLoginNetworkHandlerMixin {
         }
         
         try {
-            // 获取客户端IP地址
-            InetAddress clientAddress = ((InetSocketAddress) ((ServerLoginNetworkHandler)(Object)this).getConnection().getAddress()).getAddress();
-            TokenAuthMod.LOGGER.info("客户端IP地址: {}", clientAddress.toString());
+            // 获取客户端IP地址 - 处理本地连接和远程连接的两种情况
+            Object addressObj = ((ServerLoginNetworkHandler)(Object)this).getConnection().getAddress();
+            InetAddress clientAddress;
+            
+            if (addressObj instanceof InetSocketAddress) {
+                // 远程连接
+                clientAddress = ((InetSocketAddress) addressObj).getAddress();
+                TokenAuthMod.LOGGER.info("客户端IP地址（远程）: {}", clientAddress.toString());
+            } else if (addressObj instanceof io.netty.channel.local.LocalAddress) {
+                // 本地连接
+                clientAddress = InetAddress.getLoopbackAddress();
+                TokenAuthMod.LOGGER.info("客户端IP地址（本地）: {}", clientAddress.toString());
+            } else {
+                // 未知地址类型，使用回环地址作为后备
+                clientAddress = InetAddress.getLoopbackAddress();
+                TokenAuthMod.LOGGER.warn("未知地址类型: {}，使用回环地址", addressObj.getClass().getName());
+            }
             
             // 检查IP是否被阻止
             if (AuthSessionManager.isIPBlocked(clientAddress.toString())) {
@@ -123,6 +143,12 @@ public class ServerLoginNetworkHandlerMixin {
         // 获取服务器配置
         ModConfig.ServerConfig config = TokenAuthMod.getInstance().getConfigManager().getServerConfig();
         
+        // 添加空值检查，防止在客户端环境中出现NullPointerException
+        if (config == null) {
+            TokenAuthMod.LOGGER.warn("服务器配置为null，可能是客户端环境，继续原版登录流程");
+            return;
+        }
+        
         // 检查认证是否启用
         if (!config.enabled) {
             // 认证系统未启用，继续原版流程
@@ -130,8 +156,20 @@ public class ServerLoginNetworkHandlerMixin {
         }
         
         try {
-            // 获取客户端IP地址
-            InetAddress clientAddress = ((InetSocketAddress) ((ServerLoginNetworkHandler)(Object)this).getConnection().getAddress()).getAddress();
+            // 获取客户端IP地址 - 处理本地连接和远程连接的两种情况
+            Object addressObj = ((ServerLoginNetworkHandler)(Object)this).getConnection().getAddress();
+            InetAddress clientAddress;
+            
+            if (addressObj instanceof InetSocketAddress) {
+                // 远程连接
+                clientAddress = ((InetSocketAddress) addressObj).getAddress();
+            } else if (addressObj instanceof io.netty.channel.local.LocalAddress) {
+                // 本地连接
+                clientAddress = InetAddress.getLoopbackAddress();
+            } else {
+                // 未知地址类型，使用回环地址作为后备
+                clientAddress = InetAddress.getLoopbackAddress();
+            }
             
             // 检查IP是否被阻止
             if (AuthSessionManager.isIPBlocked(clientAddress.toString())) {

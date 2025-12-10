@@ -181,6 +181,12 @@ public class TokenCommandUnified {
             SimpleConfigManager configManager = (SimpleConfigManager) TokenAuthMod.getInstance().getConfigManager();
             ModConfig.ServerConfig config = configManager.getServerConfig();
             
+            // 添加空值检查，防止在客户端环境中出现NullPointerException
+            if (config == null) {
+                context.getSource().sendError(Text.literal("§c服务器配置未加载，无法设置配置项"));
+                return 0;
+            }
+            
             switch (configKey) {
                 case "enabled":
                     config.enabled = (Boolean) value;
@@ -439,8 +445,16 @@ public class TokenCommandUnified {
             
             MutableText status = Text.literal("§6=== Token Auth Mod 状态 ===\n");
             
+            // 添加空值检查，防止在客户端环境中出现NullPointerException
+            String authStatus = "§c未知";
+            if (config == null) {
+                authStatus = "§c配置未加载";
+            } else {
+                authStatus = config.enabled ? "§2启用" : "§c禁用";
+            }
+            
             // 认证系统状态
-            status.append(Text.literal("§a认证系统: " + (config.enabled ? "§2启用" : "§c禁用") + "\n"));
+            status.append(Text.literal("§a认证系统: " + authStatus + "\n"));
             
             // 共享密钥状态
             status.append(Text.literal("§a共享密钥: " + (config.isSharedSecretConfigured() ? "§2已配置" : "§c未配置") + "\n"));
